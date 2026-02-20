@@ -21,10 +21,8 @@
     </div>
 
     <div class="admin-tools">
-      <button class="btn" id="addBtn">+ إضافة طبق/مشروب</button>
-      <button class="btn" id="sectionsBtn">+ إضافة/تعديل الأقسام</button>
-      <select class="input" id="adminAction" style="display:none">
-        <option value="">اختر إجراء...</option>
+      <select class="input" id="adminAction" style="max-width:320px">
+        <option value="">+ إضافة (Add)</option>
         <option value="add">+ إضافة طبق/مشروب</option>
         <option value="sections">+ إضافة/تعديل الأقسام</option>
       </select>
@@ -197,11 +195,9 @@
         document.getElementById('backBtn').textContent = t('back');
         document.getElementById('pageTitle').textContent = t('admin_panel');
         document.getElementById('logout').textContent = t('logout');
-        document.getElementById('addBtn').textContent = t('add_item');
-        document.getElementById('sectionsBtn').textContent = t('manage_sections');
         const actionSel = document.getElementById('adminAction');
         if (actionSel) {
-          actionSel.options[0].textContent = (document.documentElement.lang === 'en') ? 'Choose action...' : 'اختر إجراء...';
+          actionSel.options[0].textContent = (document.documentElement.lang === 'en') ? '+ Add' : '+ إضافة';
           actionSel.options[1].textContent = t('add_item');
           actionSel.options[2].textContent = t('manage_sections');
         }
@@ -365,6 +361,7 @@
           state.sections = res.sections;
           state.items = res.items || [];
           render(state.items);
+          fillSectionsSelect(); // Ensure sections dropdown is populated after loading
         }
 
         async function saveSection() {
@@ -377,15 +374,24 @@
           const nameEn = document.getElementById('secNameEn').value;
           const descriptionAr = document.getElementById('secDescAr').value;
           const descriptionEn = document.getElementById('secDescEn').value;
-          const res = await adminUpsertSection(token, type, { id, nameAr, nameEn, descriptionAr, descriptionEn });
-
-          await loadAll();
-          document.getElementById('secType').value = type;
-          fillSectionsAdminSelect();
-          document.getElementById('secId').dataset.new = '0';
-          document.getElementById('secId').value = res.id;
-          loadSectionFormFromSelected();
-          setSecHint('تم الحفظ');
+          
+          try {
+            const res = await adminUpsertSection(token, type, { id, nameAr, nameEn, descriptionAr, descriptionEn });
+            await loadAll();
+            document.getElementById('secType').value = type;
+            fillSectionsAdminSelect();
+            document.getElementById('secId').dataset.new = '0';
+            document.getElementById('secId').value = res.id;
+            loadSectionFormFromSelected();
+            setSecHint('تم الحفظ');
+          } catch (e) {
+            if (e.message.includes('token')) {
+              alert('جلسة العمل انتهت، يرجى تسجيل الدخول مرة أخرى');
+              location.href = './login.html';
+            } else {
+              setSecHint('خطأ: ' + e.message);
+            }
+          }
         }
 
         async function deleteSection() {
@@ -413,24 +419,51 @@
             descriptionEn: document.getElementById('descriptionEn').value,
             imageUrl: document.getElementById('imageUrl').value,
           };
-          await adminUpsertItem(token, body);
-          closeAllModals();
-          await loadAll();
+          try {
+            await adminUpsertItem(token, body);
+            closeAllModals();
+            await loadAll();
+          } catch (e) {
+            if (e.message.includes('token')) {
+              alert('جلسة العمل انتهت، يرجى تسجيل الدخول مرة أخرى');
+              location.href = './login.html';
+            } else {
+              alert('خطأ: ' + e.message);
+            }
+          }
         }
 
         async function deleteItem() {
           if (!state.selected) return;
           if (!confirm('تأكيد الحذف؟')) return;
-          await adminDeleteItem(token, state.selected.id);
-          closeAllModals();
-          await loadAll();
+          try {
+            await adminDeleteItem(token, state.selected.id);
+            closeAllModals();
+            await loadAll();
+          } catch (e) {
+            if (e.message.includes('token')) {
+              alert('جلسة العمل انتهت، يرجى تسجيل الدخول مرة أخرى');
+              location.href = './login.html';
+            } else {
+              alert('خطأ: ' + e.message);
+            }
+          }
         }
 
         async function clearDiscount() {
           if (!state.selected) return;
-          await adminClearDiscount(token, state.selected.id);
-          closeAllModals();
-          await loadAll();
+          try {
+            await adminClearDiscount(token, state.selected.id);
+            closeAllModals();
+            await loadAll();
+          } catch (e) {
+            if (e.message.includes('token')) {
+              alert('جلسة العمل انتهت، يرجى تسجيل الدخول مرة أخرى');
+              location.href = './login.html';
+            } else {
+              alert('خطأ: ' + e.message);
+            }
+          }
         }
 
         async function applyDiscount() {
@@ -440,9 +473,18 @@
           const amountRaw = document.getElementById('durationAmount').value;
 
           const duration = unit === 'forever' ? { unit: 'forever', amount: 1 } : { unit, amount: Number(amountRaw || 0) };
-          await adminSetDiscount(token, state.selected.id, percent, duration);
-          closeAllModals();
-          await loadAll();
+          try {
+            await adminSetDiscount(token, state.selected.id, percent, duration);
+            closeAllModals();
+            await loadAll();
+          } catch (e) {
+            if (e.message.includes('token')) {
+              alert('جلسة العمل انتهت، يرجى تسجيل الدخول مرة أخرى');
+              location.href = './login.html';
+            } else {
+              alert('خطأ: ' + e.message);
+            }
+          }
         }
 
 
@@ -451,39 +493,16 @@
           location.href = './login.html';
         });
 
-        document.getElementById('addBtn').addEventListener('click', () => {
-          console.log('Add Button Clicked');
-          alert('ADD BUTTON CLICKED');
-          const m = document.getElementById('modal');
-          if (!m) alert('CRITICAL ERROR: modal element NOT found in DOM');
-          openForm(null);
-        });
-
-        document.getElementById('sectionsBtn').addEventListener('click', () => {
-          console.log('Sections Button Clicked');
-          alert('SECTIONS BUTTON CLICKED');
-          const m = document.getElementById('sectionsModal');
-          if (!m) alert('CRITICAL ERROR: sectionsModal element NOT found in DOM');
-          openSectionsModal();
-        });
         if (actionSel) {
-          console.log('Attaching listener to adminAction');
           actionSel.addEventListener('input', () => {
             const v = actionSel.value;
-            console.log('Action selected:', v);
             if (!v) return;
             
-            alert('ACTION TRIGGERED: ' + v); // Diagnostic alert
-
             actionSel.value = '';
             if (v === 'add') {
-              const modal = document.getElementById('modal');
-              if (!modal) alert('ERROR: Item Modal not found');
               openForm(null);
             }
             if (v === 'sections') {
-              const secModal = document.getElementById('sectionsModal');
-              if (!secModal) alert('ERROR: Sections Modal not found');
               openSectionsModal();
             }
           });
