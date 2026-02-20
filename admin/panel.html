@@ -165,6 +165,14 @@
     import { moneyIQD, calcDiscountedPrice } from '../assets/api.js';
     import { applyLangToDocument, mountLangSwitcher, t } from '../assets/i18n.js';
     const TOKEN_KEY = 'mu_admin_token';
+
+    function fatal(e) {
+      const msg = (e && e.message) ? e.message : String(e);
+      alert('ADMIN ERROR: ' + msg);
+      console.error(e);
+      throw e;
+    }
+
     const token = localStorage.getItem(TOKEN_KEY) || '';
     if (!token) location.href = './login.html';
 
