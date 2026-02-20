@@ -34,14 +34,8 @@
     </div>
   </main>
 
-<<<<<<< HEAD
-  <script src="../assets/app-config.js"></script>
-  <script src="../assets/api.js"></script>
-  <script>
-=======
   <script type="module">
     import { adminLogin, initSections } from '../assets/firebase.js';
->>>>>>> d4105c8 (deploy MU project)
     const TOKEN_KEY = 'mu_admin_token';
 
     function setHint(msg) {
@@ -53,27 +47,10 @@
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value;
       try {
-<<<<<<< HEAD
-        const res = await apiPost('admin/login', { username, password });
-        localStorage.setItem(TOKEN_KEY, res.token);
-        location.href = './panel.html';
-      } catch (e) {
-        if (String(e.message || '').includes('Admin not initialized')) {
-          setHint('أول مرة: اكتب كلمة سر جديدة الآن، وسيتم حفظها ككلمة السر الوحيدة.');
-          const res = await apiPost('admin/init', { username, password });
-          if (res.initialized) {
-            const login = await apiPost('admin/login', { username, password });
-            localStorage.setItem(TOKEN_KEY, login.token);
-            location.href = './panel.html';
-          }
-          return;
-        }
-=======
         const res = await adminLogin(username, password);
         localStorage.setItem(TOKEN_KEY, res.token);
         location.href = './panel.html';
       } catch (e) {
->>>>>>> d4105c8 (deploy MU project)
         setHint('خطأ: ' + e.message);
       }
     }
@@ -86,12 +63,9 @@
       if (e.key === 'Enter') document.getElementById('loginBtn').click();
     });
 
-<<<<<<< HEAD
-=======
     // Initialize sections on page load
     initSections().catch(console.error);
     
->>>>>>> d4105c8 (deploy MU project)
     const existing = localStorage.getItem(TOKEN_KEY);
     if (existing) {
       location.href = './panel.html';

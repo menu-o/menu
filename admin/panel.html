@@ -113,11 +113,6 @@
 
   </main>
 
-<<<<<<< HEAD
-  <script src="../assets/app-config.js"></script>
-  <script src="../assets/api.js"></script>
-  <script>
-=======
   <script type="module">
     import {
       adminListAll,
@@ -127,7 +122,6 @@
       adminClearDiscount,
     } from '../assets/firebase.js';
     import { moneyIQD, calcDiscountedPrice } from '../assets/api.js';
->>>>>>> d4105c8 (deploy MU project)
     const TOKEN_KEY = 'mu_admin_token';
     const token = localStorage.getItem(TOKEN_KEY) || '';
     if (!token) location.href = './login.html';
@@ -184,12 +178,8 @@
       const type = document.getElementById('formType').value;
       const select = document.getElementById('sectionId');
       select.innerHTML = '';
-<<<<<<< HEAD
-      const list = (state.sections && state.sections[type]) ? state.sections[type] : [];
-=======
       const sectionsObj = (state.sections && state.sections[type]) ? state.sections[type] : {};
       const list = Object.values(sectionsObj);
->>>>>>> d4105c8 (deploy MU project)
       for (const s of list) {
         const opt = document.createElement('option');
         opt.value = s.id;
@@ -241,11 +231,7 @@
     }
 
     async function loadAll() {
-<<<<<<< HEAD
-      const res = await apiPost('admin/listAll', { token });
-=======
       const res = await adminListAll(token);
->>>>>>> d4105c8 (deploy MU project)
       state.sections = res.sections;
       state.items = res.items || [];
       render(state.items);
@@ -253,10 +239,6 @@
 
     async function saveItem() {
       const body = {
-<<<<<<< HEAD
-        token,
-=======
->>>>>>> d4105c8 (deploy MU project)
         id: document.getElementById('id').value.trim() || undefined,
         type: document.getElementById('formType').value,
         sectionId: document.getElementById('sectionId').value,
@@ -265,11 +247,7 @@
         description: document.getElementById('description').value,
         imageUrl: document.getElementById('imageUrl').value,
       };
-<<<<<<< HEAD
-      await apiPost('admin/upsertItem', body);
-=======
       await adminUpsertItem(token, body);
->>>>>>> d4105c8 (deploy MU project)
       closeAllModals();
       await loadAll();
     }
@@ -277,22 +255,14 @@
     async function deleteItem() {
       if (!state.selected) return;
       if (!confirm('تأكيد الحذف؟')) return;
-<<<<<<< HEAD
-      await apiPost('admin/deleteItem', { token, id: state.selected.id });
-=======
       await adminDeleteItem(token, state.selected.id);
->>>>>>> d4105c8 (deploy MU project)
       closeAllModals();
       await loadAll();
     }
 
     async function clearDiscount() {
       if (!state.selected) return;
-<<<<<<< HEAD
-      await apiPost('admin/clearDiscount', { token, id: state.selected.id });
-=======
       await adminClearDiscount(token, state.selected.id);
->>>>>>> d4105c8 (deploy MU project)
       closeAllModals();
       await loadAll();
     }
@@ -304,11 +274,7 @@
       const amountRaw = document.getElementById('durationAmount').value;
 
       const duration = unit === 'forever' ? { unit: 'forever', amount: 1 } : { unit, amount: Number(amountRaw || 0) };
-<<<<<<< HEAD
-      await apiPost('admin/setDiscount', { token, id: state.selected.id, percent, duration });
-=======
       await adminSetDiscount(token, state.selected.id, percent, duration);
->>>>>>> d4105c8 (deploy MU project)
       closeAllModals();
       await loadAll();
     }

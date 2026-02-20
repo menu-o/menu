@@ -32,14 +32,8 @@
     <div class="items" id="items"></div>
   </main>
 
-<<<<<<< HEAD
-  <script src="./assets/app-config.js"></script>
-  <script src="./assets/api.js"></script>
-  <script>
-=======
   <script type="module">
     import { searchItems } from './assets/firebase.js';
->>>>>>> d4105c8 (deploy MU project)
     const params = new URLSearchParams(location.search);
     const initialType = params.get('type') || '';
     document.getElementById('type').value = initialType;
@@ -60,12 +54,7 @@
     async function doSearch() {
       const q = document.getElementById('q').value.trim();
       const type = document.getElementById('type').value;
-<<<<<<< HEAD
-      const res = await apiGet('search', { q, type });
-      const items = res.items || [];
-=======
       const items = await searchItems(q, type);
->>>>>>> d4105c8 (deploy MU project)
       document.getElementById('items').innerHTML = items.map(renderItem).join('') || '<div class="empty">لا توجد نتائج</div>';
     }
 
