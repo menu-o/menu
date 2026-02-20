@@ -5,6 +5,68 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MU! - Admin Panel</title>
   <link rel="stylesheet" href="../assets/styles.css" />
+  <style>
+    .admin-tools {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 24px;
+      padding: 0 16px;
+    }
+    .admin-select {
+      width: 100%;
+      max-width: 280px;
+      padding: 10px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.05);
+      color: white;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.2s;
+      outline: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: left 12px center;
+      padding-left: 40px;
+    }
+    [lang="en"] .admin-select {
+      background-position: right 12px center;
+      padding-left: 16px;
+      padding-right: 40px;
+    }
+    .admin-select:hover {
+      background-color: rgba(255,255,255,0.1);
+      border-color: var(--primary);
+    }
+    .modal-card {
+      max-width: 480px;
+      width: 90%;
+      padding: 24px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 6px;
+    }
+    .input, .textarea {
+      font-size: 14px;
+      padding: 10px 12px;
+    }
+    .textarea {
+      height: 80px;
+      resize: none;
+    }
+  </style>
 </head>
 <body>
   <header class="topbar">
@@ -21,7 +83,7 @@
     </div>
 
     <div class="admin-tools">
-      <select class="input" id="adminAction" style="max-width:320px">
+      <select class="admin-select" id="adminAction">
         <option value="">+ إضافة (Add)</option>
         <option value="add">+ إضافة طبق/مشروب</option>
         <option value="sections">+ إضافة/تعديل الأقسام</option>
@@ -36,33 +98,52 @@
 
         <div class="form">
           <input type="hidden" id="id" />
+          
+          <div class="form-grid">
+            <div class="form-group">
+              <label>النوع (Type)</label>
+              <select class="input" id="formType">
+                <option value="cafe">Cafe</option>
+                <option value="restaurant">Restaurant</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>القسم (Section)</label>
+              <select class="input" id="sectionId"></select>
+            </div>
+          </div>
 
-          <label class="label">النوع</label>
-          <select class="input" id="formType">
-            <option value="cafe">مشروب (Cafe)</option>
-            <option value="food">أكلة (Food)</option>
-          </select>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>الاسم (Ar)</label>
+              <input type="text" class="input" id="nameAr" placeholder="مثلاً: كابتشينو" />
+            </div>
+            <div class="form-group">
+              <label>Name (En)</label>
+              <input type="text" class="input" id="nameEn" placeholder="e.g. Cappuccino" />
+            </div>
+          </div>
 
-          <label class="label">القسم</label>
-          <select class="input" id="sectionId"></select>
+          <div class="form-group">
+            <label>السعر (Price)</label>
+            <input type="number" class="input" id="price" placeholder="1000" />
+          </div>
 
-          <label class="label">الاسم (عربي)</label>
-          <input class="input" id="nameAr" />
+          <div class="form-grid">
+            <div class="form-group">
+              <label>الوصف (Ar)</label>
+              <textarea class="textarea" id="descriptionAr"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Description (En)</label>
+              <textarea class="textarea" id="descriptionEn"></textarea>
+            </div>
+          </div>
 
-          <label class="label">الاسم (English)</label>
-          <input class="input" id="nameEn" />
-
-          <label class="label">السعر (IQD)</label>
-          <input class="input" id="price" inputmode="numeric" />
-
-          <label class="label">الوصف (عربي)</label>
-          <textarea class="input" id="descriptionAr" rows="3"></textarea>
-
-          <label class="label">الوصف (English)</label>
-          <textarea class="input" id="descriptionEn" rows="3"></textarea>
-
-          <label class="label">رابط الصورة (اختياري)</label>
-          <input class="input" id="imageUrl" placeholder="https://..." />
+          <div class="form-group">
+            <label>رابط الصورة (Image URL)</label>
+            <input type="text" class="input" id="imageUrl" placeholder="https://..." />
+          </div>
 
           <div class="row">
             <button class="btn" id="save">حفظ</button>
@@ -117,35 +198,53 @@
       <div class="modal-card">
         <div class="modal-title">الأقسام</div>
         <div class="form">
-          <label class="label">النوع</label>
-          <select class="input" id="secType">
-            <option value="cafe">مشروب (Cafe)</option>
-            <option value="food">أكلة (Food)</option>
-          </select>
-
-          <label class="label">اختيار قسم</label>
-          <select class="input" id="secId" data-new="0"></select>
-
-          <div class="row" style="grid-template-columns:1fr 1fr; gap:10px">
-            <button class="btn" id="secNew" type="button">قسم جديد</button>
-            <button class="icon-btn" id="secClose" type="button">إغلاق</button>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>النوع (Type)</label>
+              <select class="input" id="secType">
+                <option value="cafe">Cafe</option>
+                <option value="restaurant">Restaurant</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>اختر قسم</label>
+              <select class="input" id="secId" data-new="0"></select>
+            </div>
           </div>
 
-          <label class="label">الاسم (عربي)</label>
-          <input class="input" id="secNameAr" />
+          <div style="text-align: center; margin-bottom: 16px;">
+            <button class="btn btn-sm" id="secNew" type="button">+ قسم جديد</button>
+          </div>
 
-          <label class="label">الاسم (English)</label>
-          <input class="input" id="secNameEn" />
+          <div class="form-grid">
+            <div class="form-group">
+              <label>الاسم (Ar)</label>
+              <input type="text" class="input" id="secNameAr" />
+            </div>
+            <div class="form-group">
+              <label>Name (En)</label>
+              <input type="text" class="input" id="secNameEn" />
+            </div>
+          </div>
 
-          <label class="label">الوصف (عربي)</label>
-          <textarea class="input" id="secDescAr" rows="3"></textarea>
-
-          <label class="label">الوصف (English)</label>
-          <textarea class="input" id="secDescEn" rows="3"></textarea>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>الوصف (Ar)</label>
+              <textarea class="textarea" id="secDescAr"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Description (En)</label>
+              <textarea class="textarea" id="secDescEn"></textarea>
+            </div>
+          </div>
 
           <div class="row" style="grid-template-columns:1fr 1fr; gap:10px">
             <button class="btn" id="secSave" type="button">حفظ</button>
             <button class="btn danger" id="secDelete" type="button">حذف</button>
+          </div>
+
+          <div class="row" style="justify-content:center; margin-top:10px">
+            <button class="icon-btn" id="secClose" type="button">إغلاق</button>
           </div>
 
           <div class="hint" id="secHint"></div>
