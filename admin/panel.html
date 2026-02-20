@@ -21,8 +21,13 @@
     </div>
 
     <div class="admin-tools">
-      <button class="btn" id="addBtn">+ إضافة طبق/مشروب</button>
-      <button class="btn" id="sectionsBtn">+ إضافة/تعديل الأقسام</button>
+      <select class="input" id="adminAction" style="max-width:320px">
+        <option value="">اختر إجراء...</option>
+        <option value="add">+ إضافة طبق/مشروب</option>
+        <option value="sections">+ إضافة/تعديل الأقسام</option>
+      </select>
+      <button class="btn" id="addBtn" hidden>+ إضافة طبق/مشروب</button>
+      <button class="btn" id="sectionsBtn" hidden>+ إضافة/تعديل الأقسام</button>
     </div>
 
     <div class="items" id="items"></div>
@@ -190,6 +195,12 @@
     document.getElementById('logout').textContent = t('logout');
     document.getElementById('addBtn').textContent = t('add_item');
     document.getElementById('sectionsBtn').textContent = t('manage_sections');
+    const actionSel = document.getElementById('adminAction');
+    if (actionSel) {
+      actionSel.options[0].textContent = (document.documentElement.lang === 'en') ? 'Choose action...' : 'اختر إجراء...';
+      actionSel.options[1].textContent = t('add_item');
+      actionSel.options[2].textContent = t('manage_sections');
+    }
     const lang = document.documentElement.lang === 'en' ? 'en' : 'ar';
 
     document.getElementById('backBtn').addEventListener('click', () => {
@@ -434,6 +445,14 @@
 
     document.getElementById('addBtn').addEventListener('click', () => openForm(null));
     document.getElementById('sectionsBtn').addEventListener('click', () => openSectionsModal());
+    if (actionSel) {
+      actionSel.addEventListener('change', () => {
+        const v = actionSel.value;
+        actionSel.value = '';
+        if (v === 'add') openForm(null);
+        if (v === 'sections') openSectionsModal();
+      });
+    }
     document.getElementById('save').addEventListener('click', () => saveItem().catch(e => alert(e.message)));
     document.getElementById('cancel').addEventListener('click', () => closeAllModals());
 
