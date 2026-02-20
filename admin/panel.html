@@ -110,6 +110,46 @@
       </div>
     </div>
 
+    <div class="modal" id="sectionsModal" hidden>
+      <div class="modal-card">
+        <div class="modal-title">الأقسام</div>
+        <div class="form">
+          <label class="label">النوع</label>
+          <select class="input" id="secType">
+            <option value="cafe">مشروب (Cafe)</option>
+            <option value="food">أكلة (Food)</option>
+          </select>
+
+          <label class="label">اختيار قسم</label>
+          <select class="input" id="secId" data-new="0"></select>
+
+          <div class="row" style="grid-template-columns:1fr 1fr; gap:10px">
+            <button class="btn" id="secNew" type="button">قسم جديد</button>
+            <button class="icon-btn" id="secClose" type="button">إغلاق</button>
+          </div>
+
+          <label class="label">الاسم (عربي)</label>
+          <input class="input" id="secNameAr" />
+
+          <label class="label">الاسم (English)</label>
+          <input class="input" id="secNameEn" />
+
+          <label class="label">الوصف (عربي)</label>
+          <textarea class="input" id="secDescAr" rows="3"></textarea>
+
+          <label class="label">الوصف (English)</label>
+          <textarea class="input" id="secDescEn" rows="3"></textarea>
+
+          <div class="row" style="grid-template-columns:1fr 1fr; gap:10px">
+            <button class="btn" id="secSave" type="button">حفظ</button>
+            <button class="btn danger" id="secDelete" type="button">حذف</button>
+          </div>
+
+          <div class="hint" id="secHint"></div>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <script type="module">
