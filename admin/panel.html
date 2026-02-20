@@ -158,347 +158,354 @@
   </main>
 
   <script type="module">
-    import {
-      adminListAll,
-      adminUpsertItem,
-      adminDeleteItem,
-      adminSetDiscount,
-      adminClearDiscount,
-      adminUpsertSection,
-      adminDeleteSection,
-    } from '../assets/firebase.js';
-    import { moneyIQD, calcDiscountedPrice } from '../assets/api.js';
-    import { applyLangToDocument, mountLangSwitcher, t } from '../assets/i18n.js';
-    const TOKEN_KEY = 'mu_admin_token';
-
-    function fatal(e) {
-      const msg = (e && e.message) ? e.message : String(e);
-      alert('ADMIN ERROR: ' + msg);
-      console.error(e);
-      throw e;
-    }
-
-    const token = localStorage.getItem(TOKEN_KEY) || '';
-    if (!token) location.href = './login.html';
-
-    const state = {
-      sections: null,
-      items: [],
-      selected: null,
+    window.onerror = function(msg, url, line, col, error) {
+      alert("GLOBAL ERROR: " + msg + "\nAt: " + line + ":" + col);
     };
 
-    applyLangToDocument();
-    mountLangSwitcher(document.getElementById('langSlot'));
-    document.getElementById('homeLink').textContent = t('home');
-    document.getElementById('backBtn').textContent = t('back');
-    document.getElementById('pageTitle').textContent = t('admin_panel');
-    document.getElementById('logout').textContent = t('logout');
-    document.getElementById('addBtn').textContent = t('add_item');
-    document.getElementById('sectionsBtn').textContent = t('manage_sections');
-    const actionSel = document.getElementById('adminAction');
-    if (actionSel) {
-      actionSel.options[0].textContent = (document.documentElement.lang === 'en') ? 'Choose action...' : 'اختر إجراء...';
-      actionSel.options[1].textContent = t('add_item');
-      actionSel.options[2].textContent = t('manage_sections');
-    }
-    const lang = document.documentElement.lang === 'en' ? 'en' : 'ar';
+    async function init() {
+      console.log('Admin Script Start');
+      try {
+        const fb = await import('../assets/firebase.js');
+        const api = await import('../assets/api.js');
+        const i18n = await import('../assets/i18n.js');
+        
+        const {
+          adminListAll, adminUpsertItem, adminDeleteItem, 
+          adminSetDiscount, adminClearDiscount, adminUpsertSection, adminDeleteSection
+        } = fb;
+        const { moneyIQD, calcDiscountedPrice } = api;
+        const { applyLangToDocument, mountLangSwitcher, t } = i18n;
 
-    document.getElementById('backBtn').addEventListener('click', () => {
-      location.href = '../index.html';
-    });
+        console.log('Imports loaded');
+        const TOKEN_KEY = 'mu_admin_token';
 
-    function show(el, yes) {
-      if (yes) {
-        el.hidden = false;
-      } else {
-        el.hidden = true;
-      }
-    }
+        const token = localStorage.getItem(TOKEN_KEY) || '';
+        if (!token) {
+          location.href = './login.html';
+          return;
+        }
 
-    function closeAllModals() {
-      show(document.getElementById('modal'), false);
-      show(document.getElementById('actions'), false);
-      show(document.getElementById('discountModal'), false);
-      show(document.getElementById('sectionsModal'), false);
-    }
+        const state = {
+          sections: null,
+          items: [],
+          selected: null,
+        };
 
-    function setSecHint(msg) {
-      document.getElementById('secHint').textContent = msg || '';
-    }
+        applyLangToDocument();
+        mountLangSwitcher(document.getElementById('langSlot'));
+        document.getElementById('homeLink').textContent = t('home');
+        document.getElementById('backBtn').textContent = t('back');
+        document.getElementById('pageTitle').textContent = t('admin_panel');
+        document.getElementById('logout').textContent = t('logout');
+        document.getElementById('addBtn').textContent = t('add_item');
+        document.getElementById('sectionsBtn').textContent = t('manage_sections');
+        const actionSel = document.getElementById('adminAction');
+        if (actionSel) {
+          actionSel.options[0].textContent = (document.documentElement.lang === 'en') ? 'Choose action...' : 'اختر إجراء...';
+          actionSel.options[1].textContent = t('add_item');
+          actionSel.options[2].textContent = t('manage_sections');
+        }
+        const lang = document.documentElement.lang === 'en' ? 'en' : 'ar';
 
-    function fillSectionsAdminSelect() {
-      const type = document.getElementById('secType').value;
-      const sel = document.getElementById('secId');
-      sel.innerHTML = '';
-      const obj = (state.sections && state.sections[type]) ? state.sections[type] : {};
-      const list = Object.values(obj);
-      for (const s of list) {
-        const name = lang === 'en' ? (s.nameEn || s.nameAr || s.name || '') : (s.nameAr || s.name || s.nameEn || '');
-        const opt = document.createElement('option');
-        opt.value = s.id;
-        opt.textContent = `${name} (${s.id})`;
-        sel.appendChild(opt);
-      }
-      if (!sel.value && list[0]) sel.value = list[0].id;
-    }
-
-    function loadSectionFormFromSelected() {
-      const type = document.getElementById('secType').value;
-      const id = document.getElementById('secId').value;
-      const s = state.sections && state.sections[type] ? state.sections[type][id] : null;
-      document.getElementById('secNameAr').value = s ? (s.nameAr || s.name || '') : '';
-      document.getElementById('secNameEn').value = s ? (s.nameEn || '') : '';
-      document.getElementById('secDescAr').value = s ? (s.descriptionAr || '') : '';
-      document.getElementById('secDescEn').value = s ? (s.descriptionEn || s.description || '') : '';
-    }
-
-    function openSectionsModal() {
-      closeAllModals();
-      setSecHint('');
-      fillSectionsAdminSelect();
-      loadSectionFormFromSelected();
-      show(document.getElementById('sectionsModal'), true);
-    }
-
-    function openForm(item) {
-      closeAllModals();
-      show(document.getElementById('modal'), true);
-      document.getElementById('modalTitle').textContent = item ? 'تعديل' : 'إضافة';
-
-      document.getElementById('id').value = item ? item.id : '';
-      document.getElementById('formType').value = item ? item.type : 'cafe';
-
-      fillSectionsSelect();
-      document.getElementById('sectionId').value = item ? item.sectionId : (document.getElementById('sectionId').value || '');
-
-      document.getElementById('nameAr').value = item ? (item.nameAr || item.name || '') : '';
-      document.getElementById('nameEn').value = item ? (item.nameEn || '') : '';
-      document.getElementById('price').value = item ? item.price : '';
-      document.getElementById('descriptionAr').value = item ? (item.descriptionAr || '') : '';
-      document.getElementById('descriptionEn').value = item ? (item.descriptionEn || item.description || '') : '';
-      document.getElementById('imageUrl').value = item ? (item.imageUrl || '') : '';
-    }
-
-    function openActions(item) {
-      state.selected = item;
-      closeAllModals();
-      show(document.getElementById('actions'), true);
-    }
-
-    function openDiscount(item) {
-      state.selected = item;
-      closeAllModals();
-      show(document.getElementById('discountModal'), true);
-      document.getElementById('discountPercent').value = item.discountPercent || '';
-      document.getElementById('durationAmount').value = '';
-      document.getElementById('durationUnit').value = 'days';
-    }
-
-    function fillSectionsSelect() {
-      const type = document.getElementById('formType').value;
-      const select = document.getElementById('sectionId');
-      select.innerHTML = '';
-      const sectionsObj = (state.sections && state.sections[type]) ? state.sections[type] : {};
-      const list = Object.values(sectionsObj);
-      for (const s of list) {
-        const name = lang === 'en' ? (s.nameEn || s.nameAr || s.name || '') : (s.nameAr || s.name || s.nameEn || '');
-        const opt = document.createElement('option');
-        opt.value = s.id;
-        opt.textContent = name;
-        select.appendChild(opt);
-      }
-    }
-
-    function renderItemCard(item) {
-      const name = lang === 'en' ? (item.nameEn || item.nameAr || item.name || '') : (item.nameAr || item.name || item.nameEn || '');
-      const img = item.imageUrl ? `<img class="item-img" src="${item.imageUrl}" alt="" loading="lazy" />` : `<div class="item-img item-img-empty"></div>`;
-      const price = Number(item.price);
-      const discount = Number(item.discountPercent || 0);
-      const now = Date.now();
-      const until = item.discountUntil ? Number(item.discountUntil) : 0;
-      const active = discount > 0 && (!until || now < until);
-      const discounted = active ? calcDiscountedPrice(price, discount) : null;
-
-      const priceHtml = active ? `
-        <div class="price-row">
-          <span class="old-price">${moneyIQD(price)}</span>
-          <span class="new-price">${moneyIQD(discounted)}</span>
-          <span class="badge">خصم ${discount}%</span>
-        </div>
-      ` : `
-        <div class="price-row"><span class="new-price">${moneyIQD(price)}</span></div>
-      `;
-
-      return `
-        <div class="item-card admin-item" data-id="${item.id}">
-          ${img}
-          <div class="item-info">
-            <div class="item-name">${name}</div>
-            ${priceHtml}
-            <div class="meta">${item.type.toUpperCase()} / ${(item.section && (lang === 'en' ? (item.section.nameEn || item.section.nameAr || '') : (item.section.nameAr || item.section.nameEn || ''))) || ''} / ID: ${item.id}</div>
-          </div>
-        </div>
-      `;
-    }
-
-    function render(items) {
-      document.getElementById('items').innerHTML = items.map(renderItemCard).join('') || '<div class="empty">لا توجد عناصر</div>';
-      document.querySelectorAll('.admin-item').forEach(el => {
-        el.addEventListener('click', () => {
-          const id = el.dataset.id;
-          const item = state.items.find(x => x.id === id);
-          if (item) openActions(item);
+        document.getElementById('backBtn').addEventListener('click', () => {
+          location.href = '../index.html';
         });
-      });
+
+        function show(el, yes) {
+          if (yes) {
+            el.hidden = false;
+          } else {
+            el.hidden = true;
+          }
+        }
+
+        function closeAllModals() {
+          show(document.getElementById('modal'), false);
+          show(document.getElementById('actions'), false);
+          show(document.getElementById('discountModal'), false);
+          show(document.getElementById('sectionsModal'), false);
+        }
+
+        function setSecHint(msg) {
+          document.getElementById('secHint').textContent = msg || '';
+        }
+
+        function fillSectionsAdminSelect() {
+          const type = document.getElementById('secType').value;
+          const sel = document.getElementById('secId');
+          sel.innerHTML = '';
+          const obj = (state.sections && state.sections[type]) ? state.sections[type] : {};
+          const list = Object.values(obj);
+          for (const s of list) {
+            const name = lang === 'en' ? (s.nameEn || s.nameAr || s.name || '') : (s.nameAr || s.name || s.nameEn || '');
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = `${name} (${s.id})`;
+            sel.appendChild(opt);
+          }
+          if (!sel.value && list[0]) sel.value = list[0].id;
+        }
+
+        function loadSectionFormFromSelected() {
+          const type = document.getElementById('secType').value;
+          const id = document.getElementById('secId').value;
+          const s = state.sections && state.sections[type] ? state.sections[type][id] : null;
+          document.getElementById('secNameAr').value = s ? (s.nameAr || s.name || '') : '';
+          document.getElementById('secNameEn').value = s ? (s.nameEn || '') : '';
+          document.getElementById('secDescAr').value = s ? (s.descriptionAr || '') : '';
+          document.getElementById('secDescEn').value = s ? (s.descriptionEn || s.description || '') : '';
+        }
+
+        function openSectionsModal() {
+          closeAllModals();
+          setSecHint('');
+          fillSectionsAdminSelect();
+          loadSectionFormFromSelected();
+          show(document.getElementById('sectionsModal'), true);
+        }
+
+        function openForm(item) {
+          closeAllModals();
+          show(document.getElementById('modal'), true);
+          document.getElementById('modalTitle').textContent = item ? 'تعديل' : 'إضافة';
+
+          document.getElementById('id').value = item ? item.id : '';
+          document.getElementById('formType').value = item ? item.type : 'cafe';
+
+          fillSectionsSelect();
+          document.getElementById('sectionId').value = item ? item.sectionId : (document.getElementById('sectionId').value || '');
+
+          document.getElementById('nameAr').value = item ? (item.nameAr || item.name || '') : '';
+          document.getElementById('nameEn').value = item ? (item.nameEn || '') : '';
+          document.getElementById('price').value = item ? item.price : '';
+          document.getElementById('descriptionAr').value = item ? (item.descriptionAr || '') : '';
+          document.getElementById('descriptionEn').value = item ? (item.descriptionEn || item.description || '') : '';
+          document.getElementById('imageUrl').value = item ? (item.imageUrl || '') : '';
+        }
+
+        function openActions(item) {
+          state.selected = item;
+          closeAllModals();
+          show(document.getElementById('actions'), true);
+        }
+
+        function openDiscount(item) {
+          state.selected = item;
+          closeAllModals();
+          show(document.getElementById('discountModal'), true);
+          document.getElementById('discountPercent').value = item.discountPercent || '';
+          document.getElementById('durationAmount').value = '';
+          document.getElementById('durationUnit').value = 'days';
+        }
+
+        function fillSectionsSelect() {
+          const type = document.getElementById('formType').value;
+          const select = document.getElementById('sectionId');
+          select.innerHTML = '';
+          const sectionsObj = (state.sections && state.sections[type]) ? state.sections[type] : {};
+          const list = Object.values(sectionsObj);
+          for (const s of list) {
+            const name = lang === 'en' ? (s.nameEn || s.nameAr || s.name || '') : (s.nameAr || s.name || s.nameEn || '');
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = name;
+            select.appendChild(opt);
+          }
+        }
+
+        function renderItemCard(item) {
+          const name = lang === 'en' ? (item.nameEn || item.nameAr || item.name || '') : (item.nameAr || item.name || item.nameEn || '');
+          const img = item.imageUrl ? `<img class="item-img" src="${item.imageUrl}" alt="" loading="lazy" />` : `<div class="item-img item-img-empty"></div>`;
+          const price = Number(item.price);
+          const discount = Number(item.discountPercent || 0);
+          const now = Date.now();
+          const until = item.discountUntil ? Number(item.discountUntil) : 0;
+          const active = discount > 0 && (!until || now < until);
+          const discounted = active ? calcDiscountedPrice(price, discount) : null;
+
+          const priceHtml = active ? `
+            <div class="price-row">
+              <span class="old-price">${moneyIQD(price)}</span>
+              <span class="new-price">${moneyIQD(discounted)}</span>
+              <span class="badge">خصم ${discount}%</span>
+            </div>
+          ` : `
+            <div class="price-row"><span class="new-price">${moneyIQD(price)}</span></div>
+          `;
+
+          return `
+            <div class="item-card admin-item" data-id="${item.id}">
+              ${img}
+              <div class="item-info">
+                <div class="item-name">${name}</div>
+                ${priceHtml}
+                <div class="meta">${item.type.toUpperCase()} / ${(item.section && (lang === 'en' ? (item.section.nameEn || item.section.nameAr || '') : (item.section.nameAr || item.section.nameEn || ''))) || ''} / ID: ${item.id}</div>
+              </div>
+            </div>
+          `;
+        }
+
+        function render(items) {
+          document.getElementById('items').innerHTML = items.map(renderItemCard).join('') || '<div class="empty">لا توجد عناصر</div>';
+          document.querySelectorAll('.admin-item').forEach(el => {
+            el.addEventListener('click', () => {
+              const id = el.dataset.id;
+              const item = state.items.find(x => x.id === id);
+              if (item) openActions(item);
+            });
+          });
+        }
+
+        async function loadAll() {
+          const res = await adminListAll(token);
+          state.sections = res.sections;
+          state.items = res.items || [];
+          render(state.items);
+        }
+
+        async function saveSection() {
+          setSecHint('');
+          const type = document.getElementById('secType').value;
+          const currentId = document.getElementById('secId').value;
+          const isNew = (document.getElementById('secId').dataset.new === '1');
+          const id = isNew ? '' : currentId;
+          const nameAr = document.getElementById('secNameAr').value;
+          const nameEn = document.getElementById('secNameEn').value;
+          const descriptionAr = document.getElementById('secDescAr').value;
+          const descriptionEn = document.getElementById('secDescEn').value;
+          const res = await adminUpsertSection(token, type, { id, nameAr, nameEn, descriptionAr, descriptionEn });
+
+          await loadAll();
+          document.getElementById('secType').value = type;
+          fillSectionsAdminSelect();
+          document.getElementById('secId').dataset.new = '0';
+          document.getElementById('secId').value = res.id;
+          loadSectionFormFromSelected();
+          setSecHint('تم الحفظ');
+        }
+
+        async function deleteSection() {
+          setSecHint('');
+          const type = document.getElementById('secType').value;
+          const id = document.getElementById('secId').value;
+          if (!id) return;
+          if (!confirm('تأكيد حذف القسم؟ (لازم يكون فارغ)')) return;
+          await adminDeleteSection(token, type, id);
+          await loadAll();
+          fillSectionsAdminSelect();
+          loadSectionFormFromSelected();
+          setSecHint('تم الحذف');
+        }
+
+        async function saveItem() {
+          const body = {
+            id: document.getElementById('id').value.trim() || undefined,
+            type: document.getElementById('formType').value,
+            sectionId: document.getElementById('sectionId').value,
+            nameAr: document.getElementById('nameAr').value,
+            nameEn: document.getElementById('nameEn').value,
+            price: document.getElementById('price').value,
+            descriptionAr: document.getElementById('descriptionAr').value,
+            descriptionEn: document.getElementById('descriptionEn').value,
+            imageUrl: document.getElementById('imageUrl').value,
+          };
+          await adminUpsertItem(token, body);
+          closeAllModals();
+          await loadAll();
+        }
+
+        async function deleteItem() {
+          if (!state.selected) return;
+          if (!confirm('تأكيد الحذف؟')) return;
+          await adminDeleteItem(token, state.selected.id);
+          closeAllModals();
+          await loadAll();
+        }
+
+        async function clearDiscount() {
+          if (!state.selected) return;
+          await adminClearDiscount(token, state.selected.id);
+          closeAllModals();
+          await loadAll();
+        }
+
+        async function applyDiscount() {
+          if (!state.selected) return;
+          const percent = Number(document.getElementById('discountPercent').value);
+          const unit = document.getElementById('durationUnit').value;
+          const amountRaw = document.getElementById('durationAmount').value;
+
+          const duration = unit === 'forever' ? { unit: 'forever', amount: 1 } : { unit, amount: Number(amountRaw || 0) };
+          await adminSetDiscount(token, state.selected.id, percent, duration);
+          closeAllModals();
+          await loadAll();
+        }
+
+
+        document.getElementById('logout').addEventListener('click', () => {
+          localStorage.removeItem(TOKEN_KEY);
+          location.href = './login.html';
+        });
+
+        document.getElementById('addBtn').addEventListener('click', () => openForm(null));
+        document.getElementById('sectionsBtn').addEventListener('click', () => openSectionsModal());
+        if (actionSel) {
+          actionSel.addEventListener('change', () => {
+            const v = actionSel.value;
+            actionSel.value = '';
+            if (v === 'add') openForm(null);
+            if (v === 'sections') openSectionsModal();
+          });
+        }
+        document.getElementById('save').addEventListener('click', () => saveItem().catch(e => alert(e.message)));
+        document.getElementById('cancel').addEventListener('click', () => closeAllModals());
+
+        // search removed
+
+        document.getElementById('closeActions').addEventListener('click', () => closeAllModals());
+        document.getElementById('edit').addEventListener('click', () => openForm(state.selected));
+        document.getElementById('discount').addEventListener('click', () => openDiscount(state.selected));
+        document.getElementById('clearDiscount').addEventListener('click', () => clearDiscount().catch(e => alert(e.message)));
+        document.getElementById('del').addEventListener('click', () => deleteItem().catch(e => alert(e.message)));
+
+        document.getElementById('formType').addEventListener('change', () => fillSectionsSelect());
+
+        document.getElementById('cancelDiscount').addEventListener('click', () => closeAllModals());
+        document.getElementById('applyDiscount').addEventListener('click', () => applyDiscount().catch(e => alert(e.message)));
+
+        document.getElementById('secClose').addEventListener('click', () => closeAllModals());
+        document.getElementById('secType').addEventListener('change', () => {
+          document.getElementById('secId').dataset.new = '0';
+          fillSectionsAdminSelect();
+          loadSectionFormFromSelected();
+        });
+        document.getElementById('secId').addEventListener('change', () => {
+          document.getElementById('secId').dataset.new = '0';
+          loadSectionFormFromSelected();
+        });
+        document.getElementById('secNew').addEventListener('click', () => {
+          document.getElementById('secId').dataset.new = '1';
+          document.getElementById('secNameAr').value = '';
+          document.getElementById('secNameEn').value = '';
+          document.getElementById('secDescAr').value = '';
+          document.getElementById('secDescEn').value = '';
+          setSecHint('');
+        });
+        document.getElementById('secSave').addEventListener('click', () => saveSection().catch(e => setSecHint('خطأ: ' + e.message)));
+        document.getElementById('secDelete').addEventListener('click', () => deleteSection().catch(e => setSecHint('خطأ: ' + e.message)));
+
+        window.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') closeAllModals();
+        });
+
+        await loadAll();
+      } catch (e) {
+        alert('INIT ERROR: ' + e.message);
+        console.error(e);
+      }
     }
 
-    async function loadAll() {
-      const res = await adminListAll(token);
-      state.sections = res.sections;
-      state.items = res.items || [];
-      render(state.items);
-    }
-
-    async function saveSection() {
-      setSecHint('');
-      const type = document.getElementById('secType').value;
-      const currentId = document.getElementById('secId').value;
-      const isNew = (document.getElementById('secId').dataset.new === '1');
-      const id = isNew ? '' : currentId;
-      const nameAr = document.getElementById('secNameAr').value;
-      const nameEn = document.getElementById('secNameEn').value;
-      const descriptionAr = document.getElementById('secDescAr').value;
-      const descriptionEn = document.getElementById('secDescEn').value;
-      const res = await adminUpsertSection(token, type, { id, nameAr, nameEn, descriptionAr, descriptionEn });
-
-      await loadAll();
-      document.getElementById('secType').value = type;
-      fillSectionsAdminSelect();
-      document.getElementById('secId').dataset.new = '0';
-      document.getElementById('secId').value = res.id;
-      loadSectionFormFromSelected();
-      setSecHint('تم الحفظ');
-    }
-
-    async function deleteSection() {
-      setSecHint('');
-      const type = document.getElementById('secType').value;
-      const id = document.getElementById('secId').value;
-      if (!id) return;
-      if (!confirm('تأكيد حذف القسم؟ (لازم يكون فارغ)')) return;
-      await adminDeleteSection(token, type, id);
-      await loadAll();
-      fillSectionsAdminSelect();
-      loadSectionFormFromSelected();
-      setSecHint('تم الحذف');
-    }
-
-    async function saveItem() {
-      const body = {
-        id: document.getElementById('id').value.trim() || undefined,
-        type: document.getElementById('formType').value,
-        sectionId: document.getElementById('sectionId').value,
-        nameAr: document.getElementById('nameAr').value,
-        nameEn: document.getElementById('nameEn').value,
-        price: document.getElementById('price').value,
-        descriptionAr: document.getElementById('descriptionAr').value,
-        descriptionEn: document.getElementById('descriptionEn').value,
-        imageUrl: document.getElementById('imageUrl').value,
-      };
-      await adminUpsertItem(token, body);
-      closeAllModals();
-      await loadAll();
-    }
-
-    async function deleteItem() {
-      if (!state.selected) return;
-      if (!confirm('تأكيد الحذف؟')) return;
-      await adminDeleteItem(token, state.selected.id);
-      closeAllModals();
-      await loadAll();
-    }
-
-    async function clearDiscount() {
-      if (!state.selected) return;
-      await adminClearDiscount(token, state.selected.id);
-      closeAllModals();
-      await loadAll();
-    }
-
-    async function applyDiscount() {
-      if (!state.selected) return;
-      const percent = Number(document.getElementById('discountPercent').value);
-      const unit = document.getElementById('durationUnit').value;
-      const amountRaw = document.getElementById('durationAmount').value;
-
-      const duration = unit === 'forever' ? { unit: 'forever', amount: 1 } : { unit, amount: Number(amountRaw || 0) };
-      await adminSetDiscount(token, state.selected.id, percent, duration);
-      closeAllModals();
-      await loadAll();
-    }
-
-
-    document.getElementById('logout').addEventListener('click', () => {
-      localStorage.removeItem(TOKEN_KEY);
-      location.href = './login.html';
-    });
-
-    document.getElementById('addBtn').addEventListener('click', () => openForm(null));
-    document.getElementById('sectionsBtn').addEventListener('click', () => openSectionsModal());
-    if (actionSel) {
-      actionSel.addEventListener('change', () => {
-        const v = actionSel.value;
-        actionSel.value = '';
-        if (v === 'add') openForm(null);
-        if (v === 'sections') openSectionsModal();
-      });
-    }
-    document.getElementById('save').addEventListener('click', () => saveItem().catch(e => alert(e.message)));
-    document.getElementById('cancel').addEventListener('click', () => closeAllModals());
-
-    // search removed
-
-    document.getElementById('closeActions').addEventListener('click', () => closeAllModals());
-    document.getElementById('edit').addEventListener('click', () => openForm(state.selected));
-    document.getElementById('discount').addEventListener('click', () => openDiscount(state.selected));
-    document.getElementById('clearDiscount').addEventListener('click', () => clearDiscount().catch(e => alert(e.message)));
-    document.getElementById('del').addEventListener('click', () => deleteItem().catch(e => alert(e.message)));
-
-    document.getElementById('formType').addEventListener('change', () => fillSectionsSelect());
-
-    document.getElementById('cancelDiscount').addEventListener('click', () => closeAllModals());
-    document.getElementById('applyDiscount').addEventListener('click', () => applyDiscount().catch(e => alert(e.message)));
-
-    document.getElementById('secClose').addEventListener('click', () => closeAllModals());
-    document.getElementById('secType').addEventListener('change', () => {
-      document.getElementById('secId').dataset.new = '0';
-      fillSectionsAdminSelect();
-      loadSectionFormFromSelected();
-    });
-    document.getElementById('secId').addEventListener('change', () => {
-      document.getElementById('secId').dataset.new = '0';
-      loadSectionFormFromSelected();
-    });
-    document.getElementById('secNew').addEventListener('click', () => {
-      document.getElementById('secId').dataset.new = '1';
-      document.getElementById('secNameAr').value = '';
-      document.getElementById('secNameEn').value = '';
-      document.getElementById('secDescAr').value = '';
-      document.getElementById('secDescEn').value = '';
-      setSecHint('');
-    });
-    document.getElementById('secSave').addEventListener('click', () => saveSection().catch(e => setSecHint('خطأ: ' + e.message)));
-    document.getElementById('secDelete').addEventListener('click', () => deleteSection().catch(e => setSecHint('خطأ: ' + e.message)));
-
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeAllModals();
-    });
-
-    loadAll().catch(e => {
-      alert(e.message);
-      localStorage.removeItem(TOKEN_KEY);
-      location.href = './login.html';
-    });
+    init();
   </script>
 </body>
 </html>
