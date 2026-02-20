@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MU! - Item</title>
+  <link rel="stylesheet" href="./assets/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="admin-link" href="./admin/login.html">تسجيل آدمن</a>
+    <img class="logo" src="./assets/Project 272 [6FBA28E].png" alt="logo" />
+  </header>
+
+  <main class="page">
+    <div class="page-title">
+      <button class="icon-btn" onclick="history.back()">رجوع</button>
+      <div class="title-line" id="title"></div>
+      <div style="width:76px"></div>
+    </div>
+
+    <div class="item-page" id="content"></div>
+  </main>
+
+<<<<<<< HEAD
+  <script src="./assets/app-config.js"></script>
+  <script src="./assets/api.js"></script>
+  <script>
+=======
+  <script type="module">
+    import { getItemById, rateItem } from './assets/firebase.js';
+    import { moneyIQD, calcDiscountedPrice } from './assets/api.js';
+>>>>>>> d4105c8 (deploy MU project)
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+
+    function renderStars(avg, count) {
+      const a = Number(avg || 0);
+      const c = Number(count || 0);
+      const filled = Math.round(a);
+      const stars = Array.from({length:5}, (_,i)=> i<filled ? '★' : '☆').join('');
+      return `<div class="stars">
+        <div class="stars-row"><span class="stars-icons">${stars}</span><span class="stars-meta">${a.toFixed(1)} (${c})</span></div>
+      </div>`;
+    }
+
+    function ratingButtons() {
+      return `<div class="rate-box">
+        <div class="rate-title">قيّم هذا العنصر</div>
+        <div class="rate-buttons">
+          ${[1,2,3,4,5].map(n=>`<button class="rate-btn" data-rate="${n}">${'★'.repeat(n)}</button>`).join('')}
+        </div>
+      </div>`;
+    }
+
+    async function load() {
+      if (!id) throw new Error('Missing id');
+<<<<<<< HEAD
+      const res = await apiGet('item', { id });
+      const item = res.item;
+=======
+      const item = await getItemById(id);
+      if (!item) throw new Error('Item not found');
+>>>>>>> d4105c8 (deploy MU project)
+
+      const price = Number(item.price);
+      const discount = Number(item.discountPercent || 0);
+      const now = Date.now();
+      const discountUntil = item.discountUntil ? Number(item.discountUntil) : null;
+      const discountActive = discount > 0 && (!discountUntil || now < discountUntil);
+      const discounted = discountActive ? calcDiscountedPrice(price, discount) : null;
+
+      const img = item.imageUrl ? `<img class="item-page-img" src="${item.imageUrl}" alt="" />` : `<div class="item-page-img item-img-empty"></div>`;
+      const priceHtml = discountActive ? `
+        <div class="price-row big">
+          <span class="old-price">${moneyIQD(price)}</span>
+          <span class="new-price">${moneyIQD(discounted)}</span>
+          <span class="badge">خصم ${discount}%</span>
+        </div>
+      ` : `
+        <div class="price-row big"><span class="new-price">${moneyIQD(price)}</span></div>
+      `;
+
+      document.getElementById('title').textContent = item.name;
+      document.getElementById('content').innerHTML = `
+        <div class="item-page-card">
+          ${img}
+          <div class="item-page-info">
+            <div class="item-name big">${item.name}</div>
+            ${priceHtml}
+            <div class="item-desc big">${item.description || ''}</div>
+            ${renderStars(item.ratingAvg, item.ratingCount)}
+            ${ratingButtons()}
+          </div>
+        </div>
+      `;
+
+      document.querySelectorAll('.rate-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const value = Number(btn.dataset.rate);
+          try {
+<<<<<<< HEAD
+            await apiPost('rate', { id, value });
+            const updated = await apiGet('item', { id });
+            const it = updated.item;
+=======
+            await rateItem(id, value);
+            const it = await getItemById(id);
+>>>>>>> d4105c8 (deploy MU project)
+            document.querySelector('.stars').outerHTML = renderStars(it.ratingAvg, it.ratingCount);
+          } catch (e) {
+            alert('فشل التقييم: ' + e.message);
+          }
+        });
+      });
+    }
+
+    load().catch(err => {
+      document.getElementById('content').innerHTML = `<div class="empty">خطأ: ${err.message}</div>`;
+    });
+  </script>
+</body>
+</html>

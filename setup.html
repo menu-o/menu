@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <title>MU! - Initial Setup</title>
+  <style>
+    body { font-family: sans-serif; padding: 40px; text-align: center; background: #F5F1E9; }
+    .box { background: white; padding: 20px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    button { padding: 10px 20px; cursor: pointer; background: #C5AE8E; border: none; color: white; border-radius: 8px; font-weight: bold; }
+    #status { margin-top: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>تهيئة المنيو الأولية</h1>
+    <p>اضغط الزر بالأسفل لإضافة الأصناف الأساسية (القهوة، الشاي، الفطور...) إلى قاعدة بياناتك.</p>
+    <button id="start">ابدأ الإضافة</button>
+    <div id="status"></div>
+  </div>
+
+  <script type="module">
+    import { adminUpsertItem, initSections } from './assets/firebase.js';
+    
+    // Initialize sections first
+    initSections().then(() => console.log('Sections initialized')).catch(console.error);
+    
+    document.getElementById('start').addEventListener('click', async () => {
+      const status = document.getElementById('status');
+      status.textContent = 'جاري التحميل...';
+      
+      try {
+        const response = await fetch('./initial_items.json');
+        const items = await response.json();
+        
+        status.textContent = `جاري إضافة ${items.length} صنف... (يرجى الانتظار)`;
+
+        // We need an admin token to do this. 
+        // For simplicity in this setup tool, we'll ask the user to login first if they haven't.
+        const token = localStorage.getItem('mu_admin_token');
+        if (!token) {
+          status.innerHTML = 'خطأ: يجب تسجيل الدخول كآدمن أولاً في صفحة <a href="./admin/login.html">الآدمن</a> ثم العودة هنا.';
+          return;
+        }
+
+        let count = 0;
+        for (const item of items) {
+          await adminUpsertItem(token, item);
+          count++;
+          status.textContent = `تم إضافة ${count} من ${items.length}...`;
+        }
+
+        status.textContent = '✅ تم إضافة جميع الأصناف بنجاح! يمكنك الآن مسح هذا الملف (setup.html) و (initial_items.json).';
+      } catch (e) {
+        status.textContent = 'خطأ: ' + e.message;
+      }
+    });
+  </script>
+</body>
+</html>

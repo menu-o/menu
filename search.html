@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MU! - Search</title>
+  <link rel="stylesheet" href="./assets/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="admin-link" href="./admin/login.html">تسجيل آدمن</a>
+    <img class="logo" src="./assets/Project 272 [6FBA28E].png" alt="logo" />
+  </header>
+
+  <main class="page">
+    <div class="page-title">
+      <button class="icon-btn" onclick="history.back()">رجوع</button>
+      <div class="title-line">بحث</div>
+      <div style="width:76px"></div>
+    </div>
+
+    <div class="search-box">
+      <input class="input" id="q" placeholder="ابحث بالاسم أو ID" />
+      <select class="input" id="type">
+        <option value="">عام</option>
+        <option value="cafe">مشروب</option>
+        <option value="food">أكلة</option>
+      </select>
+      <button class="btn" id="btn">بحث</button>
+    </div>
+
+    <div class="items" id="items"></div>
+  </main>
+
+<<<<<<< HEAD
+  <script src="./assets/app-config.js"></script>
+  <script src="./assets/api.js"></script>
+  <script>
+=======
+  <script type="module">
+    import { searchItems } from './assets/firebase.js';
+>>>>>>> d4105c8 (deploy MU project)
+    const params = new URLSearchParams(location.search);
+    const initialType = params.get('type') || '';
+    document.getElementById('type').value = initialType;
+
+    function renderItem(item) {
+      const img = item.imageUrl ? `<img class="item-img" src="${item.imageUrl}" alt="" loading="lazy" />` : `<div class="item-img item-img-empty"></div>`;
+      return `
+        <a class="item-card" href="./item.html?id=${encodeURIComponent(item.id)}">
+          ${img}
+          <div class="item-info">
+            <div class="item-name">${item.name}</div>
+            <div class="meta">${item.type.toUpperCase()} / ${item.sectionName || ''} / ID: ${item.id}</div>
+          </div>
+        </a>
+      `;
+    }
+
+    async function doSearch() {
+      const q = document.getElementById('q').value.trim();
+      const type = document.getElementById('type').value;
+<<<<<<< HEAD
+      const res = await apiGet('search', { q, type });
+      const items = res.items || [];
+=======
+      const items = await searchItems(q, type);
+>>>>>>> d4105c8 (deploy MU project)
+      document.getElementById('items').innerHTML = items.map(renderItem).join('') || '<div class="empty">لا توجد نتائج</div>';
+    }
+
+    document.getElementById('btn').addEventListener('click', () => {
+      doSearch().catch(e => alert(e.message));
+    });
+
+    document.getElementById('q').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('btn').click();
+    });
+  </script>
+</body>
+</html>

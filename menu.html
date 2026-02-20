@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MU! - Menu</title>
+  <link rel="stylesheet" href="./assets/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="admin-link" href="./admin/login.html">تسجيل آدمن</a>
+    <img class="logo" src="./assets/Project 272 [6FBA28E].png" alt="logo" />
+  </header>
+
+  <main class="page">
+    <div class="page-title">
+      <button class="icon-btn" onclick="history.back()">رجوع</button>
+      <div>
+        <div class="title-line" id="menuTitle"></div>
+        <div class="subtitle" id="menuSubtitle"></div>
+      </div>
+      <a class="icon-btn" id="searchLink" href="./search.html">بحث</a>
+    </div>
+
+    <div class="chips" id="sectionChips"></div>
+
+    <div class="section-hero">
+      <div class="section-hero-title" id="sectionName"></div>
+      <div class="section-hero-desc" id="sectionDesc"></div>
+    </div>
+
+    <div class="items" id="items"></div>
+  </main>
+
+  <script type="module">
+    import { listSections, listItemsBySection, computeDiscount, initSections } from './assets/firebase.js';
+    import { moneyIQD, calcDiscountedPrice } from './assets/api.js';
+    const params = new URLSearchParams(location.search);
+    const type = (params.get('type') || 'cafe').toLowerCase();
+    const sectionIdFromUrl = params.get('section');
+
+    const TITLE = type === 'food' ? 'FOOD MENU' : 'CAFE MENU';
+    document.getElementById('menuTitle').textContent = TITLE;
+    document.getElementById('menuSubtitle').textContent = type === 'food'
+      ? 'قائمة الطعام'
+      : 'قائمة المشروبات';
+
+    document.getElementById('searchLink').href = `./search.html?type=${encodeURIComponent(type)}`;
+
+    function activeSectionStyle(el, active) {
+      el.classList.toggle('chip-active', active);
+    }
+
+    function renderItemCard(item) {
+      const price = Number(item.price);
+      const discount = Number(item.discountPercent || 0);
+      const now = Date.now();
+      const discountUntil = item.discountUntil ? Number(item.discountUntil) : null;
+      const discountActive = discount > 0 && (!discountUntil || now < discountUntil);
+      const discounted = discountActive ? calcDiscountedPrice(price, discount) : null;
+
+      const img = item.imageUrl ? `<img class="item-img" src="${item.imageUrl}" alt="" loading="lazy" />` : `<div class="item-img item-img-empty"></div>`;
+
+      const priceHtml = discountActive ? `
+        <div class="price-row">
+          <span class="old-price">${moneyIQD(price)}</span>
+          <span class="new-price">${moneyIQD(discounted)}</span>
+          <span class="badge">خصم ${discount}%</span>
+        </div>
+      ` : `
+        <div class="price-row">
+          <span class="new-price">${moneyIQD(price)}</span>
+        </div>
+      `;
+
+      return `
+        <a class="item-card" href="./item.html?id=${encodeURIComponent(item.id)}">
+          ${img}
+          <div class="item-info">
+            <div class="item-name">${item.name}</div>
+            ${priceHtml}
+            <div class="item-desc">${item.description || ''}</div>
+          </div>
+        </a>
+      `;
+    }
+
+    async function load() {
+      console.log('[DEBUG] Loading menu, type:', type);
+      
+      // Ensure sections exist in Firebase
+      try {
+        await initSections();
+        console.log('[DEBUG] initSections done');
+      } catch (e) {
+        console.error('[DEBUG] initSections error:', e);
+      }
+      
+      let sections;
+      try {
+        sections = await listSections(type);
+        console.log('[DEBUG] listSections result:', sections);
+      } catch (e) {
+        console.error('[DEBUG] listSections error:', e);
+        throw e;
+      }
+      
+      const sectionId = sectionIdFromUrl || (sections[0] && sections[0].id);
+      console.log('[DEBUG] sectionId:', sectionId);
+
+      const chips = document.getElementById('sectionChips');
+      chips.innerHTML = '';
+      for (const s of sections) {
+        const a = document.createElement('a');
+        a.href = `./menu.html?type=${encodeURIComponent(type)}&section=${encodeURIComponent(s.id)}`;
+        a.className = 'chip';
+        a.textContent = s.name;
+        activeSectionStyle(a, s.id === sectionId);
+        chips.appendChild(a);
+      }
+
+      const current = sections.find(x => x.id === sectionId) || sections[0];
+      document.getElementById('sectionName').textContent = current ? current.name : '';
+      document.getElementById('sectionDesc').textContent = current ? (current.description || '') : '';
+
+      const items = await listItemsBySection(type, sectionId);
+      const container = document.getElementById('items');
+      container.innerHTML = items.map(renderItemCard).join('') || '<div class="empty">لا توجد عناصر</div>';
+    }
+
+    load().catch(err => {
+      document.getElementById('items').innerHTML = `<div class="empty">خطأ: ${err.message}</div>`;
+    });
+  </script>
+</body>
+</html>

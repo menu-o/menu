@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MU! - Admin Login</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="admin-link" href="../index.html">الرئيسية</a>
+    <img class="logo" src="../assets/Project 272 [6FBA28E].png" alt="logo" />
+  </header>
+
+  <main class="page">
+    <div class="page-title">
+      <button class="icon-btn" onclick="history.back()">رجوع</button>
+      <div class="title-line">ADMIN</div>
+      <div style="width:76px"></div>
+    </div>
+
+    <div class="panel" id="panel">
+      <div class="panel-title">تسجيل الآدمن</div>
+      <div class="form">
+        <label class="label">يوزر</label>
+        <input class="input" id="username" value="admin" />
+
+        <label class="label">باسوورد</label>
+        <input class="input" id="password" type="password" placeholder="اكتب كلمة السر" />
+
+        <button class="btn" id="loginBtn">دخول</button>
+        <div class="hint" id="hint"></div>
+      </div>
+    </div>
+  </main>
+
+<<<<<<< HEAD
+  <script src="../assets/app-config.js"></script>
+  <script src="../assets/api.js"></script>
+  <script>
+=======
+  <script type="module">
+    import { adminLogin, initSections } from '../assets/firebase.js';
+>>>>>>> d4105c8 (deploy MU project)
+    const TOKEN_KEY = 'mu_admin_token';
+
+    function setHint(msg) {
+      document.getElementById('hint').textContent = msg || '';
+    }
+
+    async function tryLogin() {
+      setHint('');
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      try {
+<<<<<<< HEAD
+        const res = await apiPost('admin/login', { username, password });
+        localStorage.setItem(TOKEN_KEY, res.token);
+        location.href = './panel.html';
+      } catch (e) {
+        if (String(e.message || '').includes('Admin not initialized')) {
+          setHint('أول مرة: اكتب كلمة سر جديدة الآن، وسيتم حفظها ككلمة السر الوحيدة.');
+          const res = await apiPost('admin/init', { username, password });
+          if (res.initialized) {
+            const login = await apiPost('admin/login', { username, password });
+            localStorage.setItem(TOKEN_KEY, login.token);
+            location.href = './panel.html';
+          }
+          return;
+        }
+=======
+        const res = await adminLogin(username, password);
+        localStorage.setItem(TOKEN_KEY, res.token);
+        location.href = './panel.html';
+      } catch (e) {
+>>>>>>> d4105c8 (deploy MU project)
+        setHint('خطأ: ' + e.message);
+      }
+    }
+
+    document.getElementById('loginBtn').addEventListener('click', () => {
+      tryLogin();
+    });
+
+    document.getElementById('password').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('loginBtn').click();
+    });
+
+<<<<<<< HEAD
+=======
+    // Initialize sections on page load
+    initSections().catch(console.error);
+    
+>>>>>>> d4105c8 (deploy MU project)
+    const existing = localStorage.getItem(TOKEN_KEY);
+    if (existing) {
+      location.href = './panel.html';
+    }
+  </script>
+</body>
+</html>
