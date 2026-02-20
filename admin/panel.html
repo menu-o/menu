@@ -21,13 +21,13 @@
     </div>
 
     <div class="admin-tools">
-      <select class="input" id="adminAction" style="max-width:320px">
+      <button class="btn" id="addBtn">+ إضافة طبق/مشروب</button>
+      <button class="btn" id="sectionsBtn">+ إضافة/تعديل الأقسام</button>
+      <select class="input" id="adminAction" style="display:none">
         <option value="">اختر إجراء...</option>
         <option value="add">+ إضافة طبق/مشروب</option>
         <option value="sections">+ إضافة/تعديل الأقسام</option>
       </select>
-      <button class="btn" id="addBtn" hidden>+ إضافة طبق/مشروب</button>
-      <button class="btn" id="sectionsBtn" hidden>+ إضافة/تعديل الأقسام</button>
     </div>
 
     <div class="items" id="items"></div>
@@ -212,10 +212,14 @@
         });
 
         function show(el, yes) {
+          if (!el) return;
+          console.log('Showing element:', el.id, yes);
           if (yes) {
             el.hidden = false;
+            el.style.display = 'flex'; // Force display flex for modals
           } else {
             el.hidden = true;
+            el.style.display = 'none';
           }
         }
 
@@ -447,14 +451,41 @@
           location.href = './login.html';
         });
 
-        document.getElementById('addBtn').addEventListener('click', () => openForm(null));
-        document.getElementById('sectionsBtn').addEventListener('click', () => openSectionsModal());
+        document.getElementById('addBtn').addEventListener('click', () => {
+          console.log('Add Button Clicked');
+          alert('ADD BUTTON CLICKED');
+          const m = document.getElementById('modal');
+          if (!m) alert('CRITICAL ERROR: modal element NOT found in DOM');
+          openForm(null);
+        });
+
+        document.getElementById('sectionsBtn').addEventListener('click', () => {
+          console.log('Sections Button Clicked');
+          alert('SECTIONS BUTTON CLICKED');
+          const m = document.getElementById('sectionsModal');
+          if (!m) alert('CRITICAL ERROR: sectionsModal element NOT found in DOM');
+          openSectionsModal();
+        });
         if (actionSel) {
-          actionSel.addEventListener('change', () => {
+          console.log('Attaching listener to adminAction');
+          actionSel.addEventListener('input', () => {
             const v = actionSel.value;
+            console.log('Action selected:', v);
+            if (!v) return;
+            
+            alert('ACTION TRIGGERED: ' + v); // Diagnostic alert
+
             actionSel.value = '';
-            if (v === 'add') openForm(null);
-            if (v === 'sections') openSectionsModal();
+            if (v === 'add') {
+              const modal = document.getElementById('modal');
+              if (!modal) alert('ERROR: Item Modal not found');
+              openForm(null);
+            }
+            if (v === 'sections') {
+              const secModal = document.getElementById('sectionsModal');
+              if (!secModal) alert('ERROR: Sections Modal not found');
+              openSectionsModal();
+            }
           });
         }
         document.getElementById('save').addEventListener('click', () => saveItem().catch(e => alert(e.message)));
