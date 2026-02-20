@@ -6,65 +6,306 @@
   <title>MU! - Admin Panel</title>
   <link rel="stylesheet" href="../assets/styles.css" />
   <style>
+    :root {
+      --bg-beige: #F5F1E9;
+      --accent-tan: #C5AE8E;
+      --gold-muted: #BC9F79;
+      --text-coffee: #2B2B2B;
+      --white-pure: #FFFFFF;
+    }
+
+    body {
+      background-color: var(--bg-beige);
+      color: var(--text-coffee);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .topbar {
+      background-color: var(--white-pure);
+      border-bottom: 2px solid var(--accent-tan);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .topbar a, .topbar .lang-btn {
+      color: var(--text-coffee) !important;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .page-title {
+      margin: 30px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+    }
+
+    .page-title .title-line {
+      color: var(--gold-muted);
+      font-weight: 800;
+      font-size: 24px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
     .admin-tools {
       display: flex;
       justify-content: center;
-      margin-bottom: 24px;
-      padding: 0 16px;
+      margin: 20px 0 40px;
+      padding: 0 20px;
     }
+
     .admin-select {
       width: 100%;
-      max-width: 280px;
-      padding: 10px 16px;
+      max-width: 320px;
+      padding: 14px 24px;
       border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(255,255,255,0.05);
-      color: white;
-      font-size: 15px;
+      border: 2px solid var(--accent-tan);
+      background: var(--white-pure);
+      color: var(--text-coffee);
+      font-size: 16px;
+      font-weight: 700;
       cursor: pointer;
-      transition: all 0.2s;
       outline: none;
       appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%232B2B2B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
-      background-position: left 12px center;
-      padding-left: 40px;
+      background-position: left 15px center;
+      padding-left: 50px;
+      box-shadow: 0 6px 12px rgba(43, 43, 43, 0.08);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
+
     [lang="en"] .admin-select {
-      background-position: right 12px center;
-      padding-left: 16px;
-      padding-right: 40px;
+      background-position: right 15px center;
+      padding-left: 24px;
+      padding-right: 50px;
     }
+
     .admin-select:hover {
-      background-color: rgba(255,255,255,0.1);
-      border-color: var(--primary);
+      border-color: var(--gold-muted);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(43, 43, 43, 0.12);
     }
+
     .modal-card {
-      max-width: 480px;
+      background-color: var(--white-pure);
+      border: none;
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(43, 43, 43, 0.15);
+      max-width: 600px;
       width: 90%;
-      padding: 24px;
+      padding: 40px;
+      color: var(--text-coffee);
+      position: relative;
+      max-height: 90vh;
+      overflow-y: auto;
     }
+
+    .modal-title {
+      color: var(--gold-muted);
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 30px;
+      text-align: center;
+      position: relative;
+      padding-bottom: 15px;
+    }
+
+    .modal-title::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 4px;
+      background: var(--accent-tan);
+      border-radius: 2px;
+    }
+
     .form-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 24px;
+      margin-bottom: 24px;
     }
+
+    @media (max-width: 550px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      .modal-card {
+        padding: 25px;
+      }
+    }
+
     .form-group {
-      margin-bottom: 16px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
     }
-    .form-group label {
+
+    .form-group label, .label-text {
       display: block;
-      font-size: 13px;
-      color: rgba(255,255,255,0.6);
-      margin-bottom: 6px;
-    }
-    .input, .textarea {
       font-size: 14px;
-      padding: 10px 12px;
+      font-weight: 700;
+      color: var(--accent-tan);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
+
+    .input, .textarea {
+      width: 100%;
+      background-color: #FAFAFA;
+      border: 2px solid #E8E8E8;
+      color: var(--text-coffee);
+      padding: 14px 18px;
+      border-radius: 12px;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.3s;
+      box-sizing: border-box;
+    }
+
+    .input:focus, .textarea:focus {
+      border-color: var(--gold-muted);
+      background-color: var(--white-pure);
+      box-shadow: 0 0 0 4px rgba(188, 159, 121, 0.15);
+    }
+
     .textarea {
-      height: 80px;
-      resize: none;
+      height: 120px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .btn {
+      background-color: var(--gold-muted);
+      color: white;
+      padding: 14px 30px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 16px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 10px rgba(188, 159, 121, 0.3);
+    }
+
+    .btn:hover {
+      background-color: #AB8E68;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(188, 159, 121, 0.4);
+    }
+
+    .btn.danger {
+      background-color: #E2726E;
+      box-shadow: 0 4px 10px rgba(226, 114, 110, 0.3);
+    }
+
+    .btn.danger:hover {
+      background-color: #D15F5B;
+      box-shadow: 0 6px 15px rgba(226, 114, 110, 0.4);
+    }
+
+    .btn.btn-sm {
+      padding: 8px 16px;
+      font-size: 14px;
+    }
+
+    .row {
+      display: flex;
+      gap: 15px;
+      margin-top: 10px;
+      align-items: center;
+    }
+
+    .icon-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-coffee);
+      cursor: pointer;
+      font-weight: 600;
+      transition: opacity 0.2s;
+    }
+
+    .icon-btn:hover {
+      opacity: 0.7;
+    }
+
+    /* Item Card Styles Refined */
+    .items {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 25px;
+      padding: 20px;
+    }
+
+    .item-card {
+      background-color: var(--white-pure);
+      border: none;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 8px 20px rgba(43, 43, 43, 0.05);
+      transition: transform 0.3s;
+      cursor: pointer;
+    }
+
+    .item-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 30px rgba(43, 43, 43, 0.1);
+    }
+
+    .item-info {
+      padding: 20px;
+    }
+
+    .item-name {
+      color: var(--gold-muted);
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .price-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 10px 0;
+    }
+
+    .new-price {
+      color: var(--text-coffee);
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .old-price {
+      text-decoration: line-through;
+      color: var(--accent-tan);
+      font-size: 14px;
+    }
+
+    .badge {
+      background: var(--bg-beige);
+      color: var(--gold-muted);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .meta {
+      font-size: 12px;
+      color: var(--accent-tan);
+      margin-top: 10px;
+      font-weight: 600;
     }
   </style>
 </head>
