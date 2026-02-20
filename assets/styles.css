@@ -39,6 +39,15 @@ body{
   padding:10px 12px;
   border-radius:12px;
 }
+.admin-link-min{
+  background:transparent;
+  border:0;
+  padding:0;
+  border-radius:0;
+  font-size:12px;
+  font-weight:700;
+  opacity:.8;
+}
 .page{padding:10px 14px 60px; max-width:980px; margin:0 auto}
 .page-title{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:8px 0 16px}
 .title-line{font-weight:900; letter-spacing:6px; text-align:center}

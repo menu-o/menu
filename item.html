@@ -8,7 +8,6 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="admin-link" id="adminLink" href="./admin/login.html">تسجيل آدمن</a>
     <img class="logo" src="./assets/Project 272 [6FBA28E].png" alt="logo" />
     <div class="lang-slot" id="langSlot"></div>
   </header>
@@ -32,7 +31,7 @@
 
     applyLangToDocument();
     mountLangSwitcher(document.getElementById('langSlot'));
-    document.getElementById('adminLink').textContent = t('admin_login');
+    const lang = document.documentElement.lang === 'en' ? 'en' : 'ar';
     document.getElementById('backBtn').textContent = t('back');
     document.getElementById('backBtn').addEventListener('click', () => {
       location.href = './index.html';
@@ -61,14 +60,17 @@
         <div class="price-row big"><span class="new-price">${moneyIQD(price)}</span></div>
       `;
 
-      document.getElementById('title').textContent = item.name;
+      const name = lang === 'en' ? (item.nameEn || item.nameAr || item.name || '') : (item.nameAr || item.name || item.nameEn || '');
+      const desc = lang === 'en' ? (item.descriptionEn || item.descriptionAr || item.description || '') : (item.descriptionAr || item.description || item.descriptionEn || '');
+
+      document.getElementById('title').textContent = name;
       document.getElementById('content').innerHTML = `
         <div class="item-page-card">
           ${img}
           <div class="item-page-info">
-            <div class="item-name big">${item.name}</div>
+            <div class="item-name big">${name}</div>
             ${priceHtml}
-            <div class="item-desc big">${item.description || ''}</div>
+            <div class="item-desc big">${desc || ''}</div>
           </div>
         </div>
       `;

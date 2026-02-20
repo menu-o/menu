@@ -8,7 +8,6 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="admin-link" id="adminLink" href="./admin/login.html">تسجيل آدمن</a>
     <img class="logo" src="./assets/Project 272 [6FBA28E].png" alt="logo" />
     <div class="lang-slot" id="langSlot"></div>
   </header>
@@ -20,7 +19,7 @@
         <div class="title-line" id="menuTitle"></div>
         <div class="subtitle" id="menuSubtitle"></div>
       </div>
-      <a class="icon-btn" id="searchLink" href="./search.html">بحث</a>
+      <div style="width:76px"></div>
     </div>
 
     <div class="chips" id="sectionChips"></div>
@@ -43,9 +42,7 @@
 
     applyLangToDocument();
     mountLangSwitcher(document.getElementById('langSlot'));
-    document.getElementById('adminLink').textContent = t('admin_login');
     document.getElementById('backBtn').textContent = t('back');
-    document.getElementById('searchLink').textContent = t('search');
 
     document.getElementById('backBtn').addEventListener('click', () => {
       location.href = './index.html';
@@ -55,13 +52,17 @@
     document.getElementById('menuTitle').textContent = TITLE;
     document.getElementById('menuSubtitle').textContent = type === 'food' ? t('food_menu') : t('cafe_menu');
 
-    document.getElementById('searchLink').href = `./search.html?type=${encodeURIComponent(type)}`;
+    const lang = document.documentElement.lang === 'en' ? 'en' : 'ar';
+    const pickName = (x) => lang === 'en' ? (x.nameEn || x.nameAr || x.name || '') : (x.nameAr || x.name || x.nameEn || '');
+    const pickDesc = (x) => lang === 'en' ? (x.descriptionEn || x.descriptionAr || x.description || '') : (x.descriptionAr || x.description || x.descriptionEn || '');
 
     function activeSectionStyle(el, active) {
       el.classList.toggle('chip-active', active);
     }
 
     function renderItemCard(item) {
+      const name = pickName(item);
+      const desc = pickDesc(item);
       const price = Number(item.price);
       const discount = Number(item.discountPercent || 0);
       const now = Date.now();
@@ -87,9 +88,9 @@
         <a class="item-card" href="./item.html?id=${encodeURIComponent(item.id)}">
           ${img}
           <div class="item-info">
-            <div class="item-name">${item.name}</div>
+            <div class="item-name">${name}</div>
             ${priceHtml}
-            <div class="item-desc">${item.description || ''}</div>
+            <div class="item-desc">${desc || ''}</div>
           </div>
         </a>
       `;
@@ -117,14 +118,14 @@
         const a = document.createElement('a');
         a.href = `./menu.html?type=${encodeURIComponent(type)}&section=${encodeURIComponent(s.id)}`;
         a.className = 'chip';
-        a.textContent = s.name;
+        a.textContent = pickName(s);
         activeSectionStyle(a, s.id === sectionId);
         chips.appendChild(a);
       }
 
       const current = sections.find(x => x.id === sectionId) || sections[0];
-      document.getElementById('sectionName').textContent = current ? current.name : '';
-      document.getElementById('sectionDesc').textContent = current ? (current.description || '') : '';
+      document.getElementById('sectionName').textContent = current ? pickName(current) : '';
+      document.getElementById('sectionDesc').textContent = current ? pickDesc(current) : '';
 
       const items = await listItemsBySection(type, sectionId);
       const container = document.getElementById('items');

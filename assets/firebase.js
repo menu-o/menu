@@ -26,6 +26,24 @@ function uid12() {
   return Math.random().toString(16).slice(2, 8) + Math.random().toString(16).slice(2, 8);
 }
 
+function normalizeSection(s) {
+  if (!s) return null;
+  const nameAr = (typeof s.nameAr === 'string' && s.nameAr.trim()) ? s.nameAr.trim() : (typeof s.name === 'string' ? s.name.trim() : '');
+  const nameEn = (typeof s.nameEn === 'string' && s.nameEn.trim()) ? s.nameEn.trim() : '';
+  const descriptionAr = (typeof s.descriptionAr === 'string' && s.descriptionAr.trim()) ? s.descriptionAr.trim() : '';
+  const descriptionEn = (typeof s.descriptionEn === 'string' && s.descriptionEn.trim()) ? s.descriptionEn.trim() : (typeof s.description === 'string' ? s.description.trim() : '');
+  return { ...s, nameAr, nameEn, descriptionAr, descriptionEn };
+}
+
+function normalizeItem(v) {
+  if (!v) return null;
+  const nameAr = (typeof v.nameAr === 'string' && v.nameAr.trim()) ? v.nameAr.trim() : (typeof v.name === 'string' ? v.name.trim() : '');
+  const nameEn = (typeof v.nameEn === 'string' && v.nameEn.trim()) ? v.nameEn.trim() : '';
+  const descriptionAr = (typeof v.descriptionAr === 'string' && v.descriptionAr.trim()) ? v.descriptionAr.trim() : '';
+  const descriptionEn = (typeof v.descriptionEn === 'string' && v.descriptionEn.trim()) ? v.descriptionEn.trim() : (typeof v.description === 'string' ? v.description.trim() : '');
+  return { ...v, nameAr, nameEn, descriptionAr, descriptionEn };
+}
+
 export async function dbGet(path) {
   const snap = await get(ref(db, path));
   return snap.exists() ? snap.val() : null;
@@ -45,19 +63,22 @@ export async function dbRemove(path) {
 
 export async function listSections(type) {
   const data = await dbGet(`sections/${type}`);
-  return data ? Object.values(data) : [];
+  const list = data ? Object.values(data) : [];
+  return list.map(normalizeSection);
 }
 
 export async function listItemsBySection(type, sectionId) {
   const data = await dbGet(`items/${type}/${sectionId}`);
-  return data ? Object.entries(data).map(([id, v]) => ({ id, ...v, type, sectionId })) : [];
+  return data
+    ? Object.entries(data).map(([id, v]) => ({ id, ...normalizeItem(v), type, sectionId }))
+    : [];
 }
 
 export async function getItemById(id) {
   const idx = await dbGet(`itemIndex/${id}`);
   if (!idx) return null;
   const item = await dbGet(`items/${idx.type}/${idx.sectionId}/${id}`);
-  return item ? { id, ...item, type: idx.type, sectionId: idx.sectionId } : null;
+  return item ? { id, ...normalizeItem(item), type: idx.type, sectionId: idx.sectionId } : null;
 }
 
 export async function searchItems(qText, typeFilter) {
@@ -84,8 +105,10 @@ export async function searchItems(qText, typeFilter) {
 
   const ids = Object.keys(nameIndex)
     .filter(id => {
-      const v = String(nameIndex[id] || '').toLowerCase();
-      return v.includes(q);
+      const v = nameIndex[id] || {};
+      const ar = String(v.ar || '').toLowerCase();
+      const en = String(v.en || '').toLowerCase();
+      return ar.includes(q) || en.includes(q);
     })
     .slice(0, 40);
 
@@ -112,22 +135,22 @@ export async function initSections() {
   
   const defaultSections = {
     cafe: {
-      coffee: { id: 'coffee', name: 'القهوة', description: 'Coffee' },
-      hot_drinks: { id: 'hot_drinks', name: 'مشروبات ساخنه', description: 'Hot Drinks' },
-      latte: { id: 'latte', name: 'لايته', description: 'Latte' },
-      tea: { id: 'tea', name: 'شاي', description: 'Tea' },
-      mojito: { id: 'mojito', name: 'موهيتو', description: 'Mojito' },
-      smoothie: { id: 'smoothie', name: 'سموذي', description: 'Smoothie' },
-      natural_juices: { id: 'natural_juices', name: 'عصائر طبيعيه', description: 'Natural Juices' },
-      frappuccino: { id: 'frappuccino', name: 'فراباشينو', description: 'Frappuccino' },
-      matcha: { id: 'matcha', name: 'ماتشا', description: 'Matcha' }
+      coffee: { id: 'coffee', nameAr: 'القهوة', nameEn: 'Coffee', descriptionEn: 'Coffee' },
+      hot_drinks: { id: 'hot_drinks', nameAr: 'مشروبات ساخنه', nameEn: 'Hot Drinks', descriptionEn: 'Hot Drinks' },
+      latte: { id: 'latte', nameAr: 'لايته', nameEn: 'Latte', descriptionEn: 'Latte' },
+      tea: { id: 'tea', nameAr: 'شاي', nameEn: 'Tea', descriptionEn: 'Tea' },
+      mojito: { id: 'mojito', nameAr: 'موهيتو', nameEn: 'Mojito', descriptionEn: 'Mojito' },
+      smoothie: { id: 'smoothie', nameAr: 'سموذي', nameEn: 'Smoothie', descriptionEn: 'Smoothie' },
+      natural_juices: { id: 'natural_juices', nameAr: 'عصائر طبيعيه', nameEn: 'Natural Juices', descriptionEn: 'Natural Juices' },
+      frappuccino: { id: 'frappuccino', nameAr: 'فراباشينو', nameEn: 'Frappuccino', descriptionEn: 'Frappuccino' },
+      matcha: { id: 'matcha', nameAr: 'ماتشا', nameEn: 'Matcha', descriptionEn: 'Matcha' }
     },
     food: {
-      breakfast: { id: 'breakfast', name: 'الفطور', description: 'Breakfast' },
-      croissants: { id: 'croissants', name: 'كرواسون', description: 'Croissants' },
-      sandwiches: { id: 'sandwiches', name: 'ساندويتشات', description: 'Sandwiches' },
-      lunch_dinner: { id: 'lunch_dinner', name: 'غداء وعشاء', description: 'Lunch and Dinner' },
-      burgers: { id: 'burgers', name: 'البركر', description: 'Burgers' }
+      breakfast: { id: 'breakfast', nameAr: 'الفطور', nameEn: 'Breakfast', descriptionEn: 'Breakfast' },
+      croissants: { id: 'croissants', nameAr: 'كرواسون', nameEn: 'Croissants', descriptionEn: 'Croissants' },
+      sandwiches: { id: 'sandwiches', nameAr: 'ساندويتشات', nameEn: 'Sandwiches', descriptionEn: 'Sandwiches' },
+      lunch_dinner: { id: 'lunch_dinner', nameAr: 'غداء وعشاء', nameEn: 'Lunch and Dinner', descriptionEn: 'Lunch and Dinner' },
+      burgers: { id: 'burgers', nameAr: 'البركر', nameEn: 'Burgers', descriptionEn: 'Burgers' }
     }
   };
 
@@ -189,7 +212,8 @@ export async function adminListAll(token) {
   // attach sectionName
   const out = items.map(it => {
     const s = sections && sections[it.type] && sections[it.type][it.sectionId];
-    return { ...it, sectionName: s ? s.name : '' };
+    const ns = normalizeSection(s);
+    return { ...normalizeItem(it), section: ns };
   });
 
   return { sections, items: out };
@@ -203,13 +227,15 @@ export async function adminUpsertItem(token, item) {
   const sectionId = String(item.sectionId || '').trim();
   if (!sectionId) throw new Error('Missing sectionId');
 
-  const name = String(item.name || '').trim();
-  if (!name) throw new Error('Missing name');
+  const nameAr = String(item.nameAr || '').trim();
+  const nameEn = String(item.nameEn || '').trim();
+  if (!nameAr || !nameEn) throw new Error('Missing name');
 
   const price = Math.round(Number(item.price));
   if (!Number.isFinite(price) || price < 0) throw new Error('Invalid price');
 
-  const description = String(item.description || '').trim();
+  const descriptionAr = String(item.descriptionAr || '').trim();
+  const descriptionEn = String(item.descriptionEn || '').trim();
   const imageUrl = String(item.imageUrl || '').trim();
 
   const id = String(item.id || '').trim() || uid12();
@@ -219,9 +245,11 @@ export async function adminUpsertItem(token, item) {
   const discountUntil = existing ? Number(existing.discountUntil || 0) : 0;
 
   await dbSet(`items/${type}/${sectionId}/${id}`, {
-    name,
+    nameAr,
+    nameEn,
     price,
-    description,
+    descriptionAr,
+    descriptionEn,
     imageUrl,
     discountPercent,
     discountUntil,
@@ -230,7 +258,7 @@ export async function adminUpsertItem(token, item) {
   });
 
   await dbSet(`itemIndex/${id}`, { type, sectionId });
-  await dbSet(`nameIndex/${id}`, name);
+  await dbSet(`nameIndex/${id}`, { ar: nameAr, en: nameEn });
 
   return { id };
 }
@@ -290,11 +318,13 @@ export async function adminUpsertSection(token, type, section) {
   if (type !== 'cafe' && type !== 'food') throw new Error('Invalid type');
 
   const id = String(section && section.id ? section.id : '').trim() || uid12();
-  const name = String(section && section.name ? section.name : '').trim();
-  const description = String(section && section.description ? section.description : '').trim();
-  if (!name) throw new Error('Missing name');
+  const nameAr = String(section && (section.nameAr || section.name) ? (section.nameAr || section.name) : '').trim();
+  const nameEn = String(section && section.nameEn ? section.nameEn : '').trim();
+  const descriptionAr = String(section && section.descriptionAr ? section.descriptionAr : '').trim();
+  const descriptionEn = String(section && (section.descriptionEn || section.description) ? (section.descriptionEn || section.description) : '').trim();
+  if (!nameAr || !nameEn) throw new Error('Missing name');
 
-  await dbSet(`sections/${type}/${id}`, { id, name, description });
+  await dbSet(`sections/${type}/${id}`, { id, nameAr, nameEn, descriptionAr, descriptionEn });
   return { id };
 }
 

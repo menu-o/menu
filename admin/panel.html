@@ -23,15 +23,6 @@
     <div class="admin-tools">
       <button class="btn" id="addBtn">+ إضافة طبق/مشروب</button>
       <button class="btn" id="sectionsBtn">+ إضافة/تعديل الأقسام</button>
-      <div class="search-box" style="grid-template-columns:1fr 180px 120px; margin-top:12px">
-        <input class="input" id="q" placeholder="بحث بالاسم أو ID" />
-        <select class="input" id="type">
-          <option value="">عام</option>
-          <option value="cafe">مشروب</option>
-          <option value="food">أكلة</option>
-        </select>
-        <button class="btn" id="searchBtn">بحث</button>
-      </div>
     </div>
 
     <div class="items" id="items"></div>
@@ -52,14 +43,20 @@
           <label class="label">القسم</label>
           <select class="input" id="sectionId"></select>
 
-          <label class="label">الاسم</label>
-          <input class="input" id="name" />
+          <label class="label">الاسم (عربي)</label>
+          <input class="input" id="nameAr" />
+
+          <label class="label">الاسم (English)</label>
+          <input class="input" id="nameEn" />
 
           <label class="label">السعر (IQD)</label>
           <input class="input" id="price" inputmode="numeric" />
 
-          <label class="label">الوصف</label>
-          <textarea class="input" id="description" rows="3"></textarea>
+          <label class="label">الوصف (عربي)</label>
+          <textarea class="input" id="descriptionAr" rows="3"></textarea>
+
+          <label class="label">الوصف (English)</label>
+          <textarea class="input" id="descriptionEn" rows="3"></textarea>
 
           <label class="label">رابط الصورة (اختياري)</label>
           <input class="input" id="imageUrl" placeholder="https://..." />
@@ -145,17 +142,18 @@
     document.getElementById('logout').textContent = t('logout');
     document.getElementById('addBtn').textContent = t('add_item');
     document.getElementById('sectionsBtn').textContent = t('manage_sections');
-    document.getElementById('searchBtn').textContent = t('search');
-    document.querySelector('#type option[value=""]').textContent = t('type_all');
-    document.querySelector('#type option[value="cafe"]').textContent = t('type_cafe');
-    document.querySelector('#type option[value="food"]').textContent = t('type_food');
+    const lang = document.documentElement.lang === 'en' ? 'en' : 'ar';
 
     document.getElementById('backBtn').addEventListener('click', () => {
       location.href = '../index.html';
     });
 
     function show(el, yes) {
-      el.style.display = yes ? 'flex' : 'none';
+      if (yes) {
+        el.hidden = false;
+      } else {
+        el.hidden = true;
+      }
     }
 
     function closeAllModals() {
@@ -176,9 +174,10 @@
       const obj = (state.sections && state.sections[type]) ? state.sections[type] : {};
       const list = Object.values(obj);
       for (const s of list) {
+        const name = lang === 'en' ? (s.nameEn || s.nameAr || s.name || '') : (s.nameAr || s.name || s.nameEn || '');
         const opt = document.createElement('option');
         opt.value = s.id;
-        opt.textContent = `${s.name} (${s.id})`;
+        opt.textContent = `${name} (${s.id})`;
         sel.appendChild(opt);
       }
       if (!sel.value && list[0]) sel.value = list[0].id;
@@ -188,8 +187,10 @@
       const type = document.getElementById('secType').value;
       const id = document.getElementById('secId').value;
       const s = state.sections && state.sections[type] ? state.sections[type][id] : null;
-      document.getElementById('secName').value = s ? (s.name || '') : '';
-      document.getElementById('secDesc').value = s ? (s.description || '') : '';
+      document.getElementById('secNameAr').value = s ? (s.nameAr || s.name || '') : '';
+      document.getElementById('secNameEn').value = s ? (s.nameEn || '') : '';
+      document.getElementById('secDescAr').value = s ? (s.descriptionAr || '') : '';
+      document.getElementById('secDescEn').value = s ? (s.descriptionEn || s.description || '') : '';
     }
 
     function openSectionsModal() {
@@ -211,9 +212,11 @@
       fillSectionsSelect();
       document.getElementById('sectionId').value = item ? item.sectionId : (document.getElementById('sectionId').value || '');
 
-      document.getElementById('name').value = item ? item.name : '';
+      document.getElementById('nameAr').value = item ? (item.nameAr || item.name || '') : '';
+      document.getElementById('nameEn').value = item ? (item.nameEn || '') : '';
       document.getElementById('price').value = item ? item.price : '';
-      document.getElementById('description').value = item ? (item.description || '') : '';
+      document.getElementById('descriptionAr').value = item ? (item.descriptionAr || '') : '';
+      document.getElementById('descriptionEn').value = item ? (item.descriptionEn || item.description || '') : '';
       document.getElementById('imageUrl').value = item ? (item.imageUrl || '') : '';
     }
 
@@ -239,14 +242,16 @@
       const sectionsObj = (state.sections && state.sections[type]) ? state.sections[type] : {};
       const list = Object.values(sectionsObj);
       for (const s of list) {
+        const name = lang === 'en' ? (s.nameEn || s.nameAr || s.name || '') : (s.nameAr || s.name || s.nameEn || '');
         const opt = document.createElement('option');
         opt.value = s.id;
-        opt.textContent = s.name;
+        opt.textContent = name;
         select.appendChild(opt);
       }
     }
 
     function renderItemCard(item) {
+      const name = lang === 'en' ? (item.nameEn || item.nameAr || item.name || '') : (item.nameAr || item.name || item.nameEn || '');
       const img = item.imageUrl ? `<img class="item-img" src="${item.imageUrl}" alt="" loading="lazy" />` : `<div class="item-img item-img-empty"></div>`;
       const price = Number(item.price);
       const discount = Number(item.discountPercent || 0);
@@ -269,9 +274,9 @@
         <div class="item-card admin-item" data-id="${item.id}">
           ${img}
           <div class="item-info">
-            <div class="item-name">${item.name}</div>
+            <div class="item-name">${name}</div>
             ${priceHtml}
-            <div class="meta">${item.type.toUpperCase()} / ${item.sectionName || ''} / ID: ${item.id}</div>
+            <div class="meta">${item.type.toUpperCase()} / ${(item.section && (lang === 'en' ? (item.section.nameEn || item.section.nameAr || '') : (item.section.nameAr || item.section.nameEn || ''))) || ''} / ID: ${item.id}</div>
           </div>
         </div>
       `;
@@ -301,9 +306,11 @@
       const currentId = document.getElementById('secId').value;
       const isNew = (document.getElementById('secId').dataset.new === '1');
       const id = isNew ? '' : currentId;
-      const name = document.getElementById('secName').value;
-      const description = document.getElementById('secDesc').value;
-      const res = await adminUpsertSection(token, type, { id, name, description });
+      const nameAr = document.getElementById('secNameAr').value;
+      const nameEn = document.getElementById('secNameEn').value;
+      const descriptionAr = document.getElementById('secDescAr').value;
+      const descriptionEn = document.getElementById('secDescEn').value;
+      const res = await adminUpsertSection(token, type, { id, nameAr, nameEn, descriptionAr, descriptionEn });
 
       await loadAll();
       document.getElementById('secType').value = type;
@@ -332,9 +339,11 @@
         id: document.getElementById('id').value.trim() || undefined,
         type: document.getElementById('formType').value,
         sectionId: document.getElementById('sectionId').value,
-        name: document.getElementById('name').value,
+        nameAr: document.getElementById('nameAr').value,
+        nameEn: document.getElementById('nameEn').value,
         price: document.getElementById('price').value,
-        description: document.getElementById('description').value,
+        descriptionAr: document.getElementById('descriptionAr').value,
+        descriptionEn: document.getElementById('descriptionEn').value,
         imageUrl: document.getElementById('imageUrl').value,
       };
       await adminUpsertItem(token, body);
@@ -369,16 +378,6 @@
       await loadAll();
     }
 
-    function doSearch() {
-      const q = document.getElementById('q').value.trim().toLowerCase();
-      const type = document.getElementById('type').value;
-      let items = state.items;
-      if (type) items = items.filter(x => x.type === type);
-      if (q) {
-        items = items.filter(x => x.id.toLowerCase() === q || String(x.name || '').toLowerCase().includes(q));
-      }
-      render(items);
-    }
 
     document.getElementById('logout').addEventListener('click', () => {
       localStorage.removeItem(TOKEN_KEY);
@@ -390,7 +389,7 @@
     document.getElementById('save').addEventListener('click', () => saveItem().catch(e => alert(e.message)));
     document.getElementById('cancel').addEventListener('click', () => closeAllModals());
 
-    document.getElementById('searchBtn').addEventListener('click', () => doSearch());
+    // search removed
 
     document.getElementById('closeActions').addEventListener('click', () => closeAllModals());
     document.getElementById('edit').addEventListener('click', () => openForm(state.selected));
@@ -415,8 +414,10 @@
     });
     document.getElementById('secNew').addEventListener('click', () => {
       document.getElementById('secId').dataset.new = '1';
-      document.getElementById('secName').value = '';
-      document.getElementById('secDesc').value = '';
+      document.getElementById('secNameAr').value = '';
+      document.getElementById('secNameEn').value = '';
+      document.getElementById('secDescAr').value = '';
+      document.getElementById('secDescEn').value = '';
       setSecHint('');
     });
     document.getElementById('secSave').addEventListener('click', () => saveSection().catch(e => setSecHint('خطأ: ' + e.message)));
