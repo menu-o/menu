@@ -21,6 +21,11 @@ body{
   align-items:center;
   justify-content:center;
 }
+.lang-slot{
+  position:absolute;
+  right:16px;
+  top:18px;
+}
 .logo{height:117px; width:auto; max-width:100%; object-fit:contain}
 .admin-link{
   position:absolute;
@@ -48,7 +53,10 @@ body{
   font-weight:800;
   min-width:76px;
   text-align:center;
+  transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
 }
+.icon-btn:hover{box-shadow: 0 10px 22px rgba(0,0,0,.10)}
+.icon-btn:active{transform: translateY(1px)}
 .landing{min-height:calc(100% - 80px); display:flex; align-items:flex-start; justify-content:center; padding:40px 16px}
 .landing-card{
   width:min(860px, 100%);
@@ -58,6 +66,7 @@ body{
   display:grid;
   grid-template-columns:1fr 2px 1fr;
   overflow:hidden;
+  animation: fadeUp .35s ease both;
 }
 .menu-choice{
   appearance:none;
@@ -65,7 +74,9 @@ body{
   background:transparent;
   padding:28px 22px 30px;
   cursor:pointer;
+  transition: transform .18s ease, background-color .18s ease;
 }
+.menu-choice:hover{background: rgba(197,174,142,.08)}
 .menu-choice:active{transform:translateY(1px)}
 .choice-title{
   background: var(--tan);
@@ -97,7 +108,10 @@ body{
   border-radius:14px;
   font-weight:900;
   box-shadow: 0 10px 18px rgba(0,0,0,.10);
+  transition: transform .12s ease, filter .12s ease;
 }
+.chip:hover{filter: brightness(1.03)}
+.chip:active{transform: translateY(1px)}
 .chip-active{outline:3px solid rgba(188,159,121,.55)}
 
 .section-hero{margin:8px 0 18px; text-align:center}
@@ -116,7 +130,10 @@ body{
   padding:10px;
   text-decoration:none;
   color:inherit;
+  transition: transform .16s ease, box-shadow .16s ease;
 }
+.item-card:hover{transform: translateY(-2px); box-shadow: 0 16px 30px rgba(0,0,0,.14)}
+.item-card:active{transform: translateY(-1px)}
 .item-img{width:90px; height:66px; border-radius:14px; object-fit:cover; background:#eee}
 .item-img-empty{background:linear-gradient(180deg, rgba(197,174,142,.35), rgba(245,241,233,.9))}
 .item-info{padding:6px 6px 6px 0}
@@ -142,14 +159,7 @@ body{
 .item-page-img{width:100%; height:220px; object-fit:cover; border-radius:16px; background:#eee}
 .item-page-info{display:flex; flex-direction:column}
 
-.stars{margin-top:10px}
-.stars-row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-.stars-icons{font-size:22px; letter-spacing:2px; color:#caa461}
-.stars-meta{font-weight:900; color:rgba(0,0,0,.65)}
-.rate-box{margin-top:12px; padding-top:12px; border-top:1px solid rgba(0,0,0,.08)}
-.rate-title{font-weight:900; margin-bottom:10px}
-.rate-buttons{display:flex; gap:8px; flex-wrap:wrap}
-.rate-btn{border:1px solid rgba(0,0,0,.10); background:#fff; padding:10px 12px; border-radius:12px; font-weight:900; cursor:pointer}
+/* rating system removed */
 
 .panel{background:#fff; border-radius:18px; box-shadow: 0 10px 22px rgba(0,0,0,.12); padding:16px}
 .panel-title{font-weight:900; margin-bottom:12px; color:var(--gold)}
@@ -162,6 +172,11 @@ body{
 .modal-card{width:min(560px, 100%); background:#fff; border-radius:18px; box-shadow: 0 18px 50px rgba(0,0,0,.25); padding:16px}
 .modal-title{font-weight:900; margin-bottom:12px; color:var(--gold)}
 .danger{background:#b31313}
+
+@keyframes fadeUp{
+  from{opacity:0; transform: translateY(10px)}
+  to{opacity:1; transform: translateY(0)}
+}
 
 @media (max-width: 720px){
   .search-box{grid-template-columns:1fr 120px 90px}

@@ -8,14 +8,15 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="admin-link" href="./admin/login.html">تسجيل آدمن</a>
+    <a class="admin-link" id="adminLink" href="./admin/login.html">تسجيل آدمن</a>
     <img class="logo" src="./assets/Project 272 [6FBA28E].png" alt="logo" />
+    <div class="lang-slot" id="langSlot"></div>
   </header>
 
   <main class="page">
     <div class="page-title">
-      <button class="icon-btn" onclick="history.back()">رجوع</button>
-      <div class="title-line">بحث</div>
+      <button class="icon-btn" id="backBtn">رجوع</button>
+      <div class="title-line" id="pageTitle">بحث</div>
       <div style="width:76px"></div>
     </div>
 
@@ -34,6 +35,22 @@
 
   <script type="module">
     import { searchItems } from './assets/firebase.js';
+    import { applyLangToDocument, mountLangSwitcher, t } from './assets/i18n.js';
+
+    applyLangToDocument();
+    mountLangSwitcher(document.getElementById('langSlot'));
+    document.getElementById('adminLink').textContent = t('admin_login');
+    document.getElementById('backBtn').textContent = t('back');
+    document.getElementById('pageTitle').textContent = t('search_title');
+    document.getElementById('q').placeholder = t('search') + '...';
+    document.getElementById('btn').textContent = t('search');
+    document.querySelector('#type option[value=""]').textContent = t('type_all');
+    document.querySelector('#type option[value="cafe"]').textContent = t('type_cafe');
+    document.querySelector('#type option[value="food"]').textContent = t('type_food');
+
+    document.getElementById('backBtn').addEventListener('click', () => {
+      location.href = './index.html';
+    });
     const params = new URLSearchParams(location.search);
     const initialType = params.get('type') || '';
     document.getElementById('type').value = initialType;
@@ -55,7 +72,7 @@
       const q = document.getElementById('q').value.trim();
       const type = document.getElementById('type').value;
       const items = await searchItems(q, type);
-      document.getElementById('items').innerHTML = items.map(renderItem).join('') || '<div class="empty">لا توجد نتائج</div>';
+      document.getElementById('items').innerHTML = items.map(renderItem).join('') || `<div class="empty">${t('empty_results')}</div>`;
     }
 
     document.getElementById('btn').addEventListener('click', () => {

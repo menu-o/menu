@@ -8,13 +8,14 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="admin-link" href="./admin/login.html">تسجيل آدمن</a>
+    <a class="admin-link" id="adminLink" href="./admin/login.html">تسجيل آدمن</a>
     <img class="logo" src="./assets/Project 272 [6FBA28E].png" alt="logo" />
+    <div class="lang-slot" id="langSlot"></div>
   </header>
 
   <main class="page">
     <div class="page-title">
-      <button class="icon-btn" onclick="history.back()">رجوع</button>
+      <button class="icon-btn" id="backBtn">رجوع</button>
       <div>
         <div class="title-line" id="menuTitle"></div>
         <div class="subtitle" id="menuSubtitle"></div>
@@ -35,15 +36,24 @@
   <script type="module">
     import { listSections, listItemsBySection, computeDiscount, initSections } from './assets/firebase.js';
     import { moneyIQD, calcDiscountedPrice } from './assets/api.js';
+    import { applyLangToDocument, mountLangSwitcher, t } from './assets/i18n.js';
     const params = new URLSearchParams(location.search);
     const type = (params.get('type') || 'cafe').toLowerCase();
     const sectionIdFromUrl = params.get('section');
 
-    const TITLE = type === 'food' ? 'FOOD MENU' : 'CAFE MENU';
+    applyLangToDocument();
+    mountLangSwitcher(document.getElementById('langSlot'));
+    document.getElementById('adminLink').textContent = t('admin_login');
+    document.getElementById('backBtn').textContent = t('back');
+    document.getElementById('searchLink').textContent = t('search');
+
+    document.getElementById('backBtn').addEventListener('click', () => {
+      location.href = './index.html';
+    });
+
+    const TITLE = type === 'food' ? t('food_menu_title') : t('cafe_menu_title');
     document.getElementById('menuTitle').textContent = TITLE;
-    document.getElementById('menuSubtitle').textContent = type === 'food'
-      ? 'قائمة الطعام'
-      : 'قائمة المشروبات';
+    document.getElementById('menuSubtitle').textContent = type === 'food' ? t('food_menu') : t('cafe_menu');
 
     document.getElementById('searchLink').href = `./search.html?type=${encodeURIComponent(type)}`;
 
@@ -86,27 +96,20 @@
     }
 
     async function load() {
-      console.log('[DEBUG] Loading menu, type:', type);
-      
       // Ensure sections exist in Firebase
       try {
         await initSections();
-        console.log('[DEBUG] initSections done');
       } catch (e) {
-        console.error('[DEBUG] initSections error:', e);
       }
       
       let sections;
       try {
         sections = await listSections(type);
-        console.log('[DEBUG] listSections result:', sections);
       } catch (e) {
-        console.error('[DEBUG] listSections error:', e);
         throw e;
       }
       
       const sectionId = sectionIdFromUrl || (sections[0] && sections[0].id);
-      console.log('[DEBUG] sectionId:', sectionId);
 
       const chips = document.getElementById('sectionChips');
       chips.innerHTML = '';
@@ -125,7 +128,7 @@
 
       const items = await listItemsBySection(type, sectionId);
       const container = document.getElementById('items');
-      container.innerHTML = items.map(renderItemCard).join('') || '<div class="empty">لا توجد عناصر</div>';
+      container.innerHTML = items.map(renderItemCard).join('') || `<div class="empty">${t('empty_items')}</div>`;
     }
 
     load().catch(err => {

@@ -107,25 +107,6 @@ export function computeDiscount(item) {
   return { active: true, discounted };
 }
 
-export async function rateItem(id, value) {
-  const it = await getItemById(id);
-  if (!it) throw new Error('Item not found');
-  const v = Math.max(1, Math.min(5, Math.floor(Number(value))));
-
-  const count = Number(it.ratingCount || 0);
-  const avg = Number(it.ratingAvg || 0);
-  const newCount = count + 1;
-  const newAvg = Math.round((((avg * count) + v) / newCount) * 10) / 10;
-
-  await dbUpdate(`items/${it.type}/${it.sectionId}/${id}`, {
-    ratingCount: newCount,
-    ratingAvg: newAvg,
-    updatedAt: nowMs(),
-  });
-
-  return { ratingCount: newCount, ratingAvg: newAvg };
-}
-
 export async function initSections() {
   const existing = await dbGet('sections') || {};
   
@@ -236,8 +217,6 @@ export async function adminUpsertItem(token, item) {
   const existing = await getItemById(id);
   const discountPercent = existing ? Number(existing.discountPercent || 0) : 0;
   const discountUntil = existing ? Number(existing.discountUntil || 0) : 0;
-  const ratingAvg = existing ? Number(existing.ratingAvg || 0) : 0;
-  const ratingCount = existing ? Number(existing.ratingCount || 0) : 0;
 
   await dbSet(`items/${type}/${sectionId}/${id}`, {
     name,
@@ -246,8 +225,6 @@ export async function adminUpsertItem(token, item) {
     imageUrl,
     discountPercent,
     discountUntil,
-    ratingAvg,
-    ratingCount,
     updatedAt: nowMs(),
     createdAt: existing ? existing.createdAt || nowMs() : nowMs(),
   });
@@ -304,6 +281,36 @@ export async function adminClearDiscount(token, id) {
     discountUntil: 0,
     updatedAt: nowMs(),
   });
+}
+
+export async function adminUpsertSection(token, type, section) {
+  await verifyToken(token);
+
+  type = String(type || '').toLowerCase();
+  if (type !== 'cafe' && type !== 'food') throw new Error('Invalid type');
+
+  const id = String(section && section.id ? section.id : '').trim() || uid12();
+  const name = String(section && section.name ? section.name : '').trim();
+  const description = String(section && section.description ? section.description : '').trim();
+  if (!name) throw new Error('Missing name');
+
+  await dbSet(`sections/${type}/${id}`, { id, name, description });
+  return { id };
+}
+
+export async function adminDeleteSection(token, type, sectionId) {
+  await verifyToken(token);
+
+  type = String(type || '').toLowerCase();
+  if (type !== 'cafe' && type !== 'food') throw new Error('Invalid type');
+
+  sectionId = String(sectionId || '').trim();
+  if (!sectionId) throw new Error('Missing sectionId');
+
+  const existing = await dbGet(`items/${type}/${sectionId}`);
+  if (existing && Object.keys(existing).length) throw new Error('Section not empty');
+
+  await dbRemove(`sections/${type}/${sectionId}`);
 }
 
 async function sha256(text) {

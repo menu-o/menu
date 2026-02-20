@@ -8,19 +8,21 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="admin-link" href="../index.html">الرئيسية</a>
+    <a class="admin-link" id="homeLink" href="../index.html">الرئيسية</a>
     <img class="logo" src="../assets/Project 272 [6FBA28E].png" alt="logo" />
+    <div class="lang-slot" id="langSlot"></div>
   </header>
 
   <main class="page">
     <div class="page-title">
-      <button class="icon-btn" onclick="history.back()">رجوع</button>
-      <div class="title-line">ADMIN PANEL</div>
+      <button class="icon-btn" id="backBtn">رجوع</button>
+      <div class="title-line" id="pageTitle">ADMIN PANEL</div>
       <button class="icon-btn" id="logout">خروج</button>
     </div>
 
     <div class="admin-tools">
       <button class="btn" id="addBtn">+ إضافة طبق/مشروب</button>
+      <button class="btn" id="sectionsBtn">+ إضافة/تعديل الأقسام</button>
       <div class="search-box" style="grid-template-columns:1fr 180px 120px; margin-top:12px">
         <input class="input" id="q" placeholder="بحث بالاسم أو ID" />
         <select class="input" id="type">
@@ -120,8 +122,11 @@
       adminDeleteItem,
       adminSetDiscount,
       adminClearDiscount,
+      adminUpsertSection,
+      adminDeleteSection,
     } from '../assets/firebase.js';
     import { moneyIQD, calcDiscountedPrice } from '../assets/api.js';
+    import { applyLangToDocument, mountLangSwitcher, t } from '../assets/i18n.js';
     const TOKEN_KEY = 'mu_admin_token';
     const token = localStorage.getItem(TOKEN_KEY) || '';
     if (!token) location.href = './login.html';
@@ -132,6 +137,23 @@
       selected: null,
     };
 
+    applyLangToDocument();
+    mountLangSwitcher(document.getElementById('langSlot'));
+    document.getElementById('homeLink').textContent = t('home');
+    document.getElementById('backBtn').textContent = t('back');
+    document.getElementById('pageTitle').textContent = t('admin_panel');
+    document.getElementById('logout').textContent = t('logout');
+    document.getElementById('addBtn').textContent = t('add_item');
+    document.getElementById('sectionsBtn').textContent = t('manage_sections');
+    document.getElementById('searchBtn').textContent = t('search');
+    document.querySelector('#type option[value=""]').textContent = t('type_all');
+    document.querySelector('#type option[value="cafe"]').textContent = t('type_cafe');
+    document.querySelector('#type option[value="food"]').textContent = t('type_food');
+
+    document.getElementById('backBtn').addEventListener('click', () => {
+      location.href = '../index.html';
+    });
+
     function show(el, yes) {
       el.style.display = yes ? 'flex' : 'none';
     }
@@ -140,6 +162,42 @@
       show(document.getElementById('modal'), false);
       show(document.getElementById('actions'), false);
       show(document.getElementById('discountModal'), false);
+      show(document.getElementById('sectionsModal'), false);
+    }
+
+    function setSecHint(msg) {
+      document.getElementById('secHint').textContent = msg || '';
+    }
+
+    function fillSectionsAdminSelect() {
+      const type = document.getElementById('secType').value;
+      const sel = document.getElementById('secId');
+      sel.innerHTML = '';
+      const obj = (state.sections && state.sections[type]) ? state.sections[type] : {};
+      const list = Object.values(obj);
+      for (const s of list) {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = `${s.name} (${s.id})`;
+        sel.appendChild(opt);
+      }
+      if (!sel.value && list[0]) sel.value = list[0].id;
+    }
+
+    function loadSectionFormFromSelected() {
+      const type = document.getElementById('secType').value;
+      const id = document.getElementById('secId').value;
+      const s = state.sections && state.sections[type] ? state.sections[type][id] : null;
+      document.getElementById('secName').value = s ? (s.name || '') : '';
+      document.getElementById('secDesc').value = s ? (s.description || '') : '';
+    }
+
+    function openSectionsModal() {
+      closeAllModals();
+      setSecHint('');
+      fillSectionsAdminSelect();
+      loadSectionFormFromSelected();
+      show(document.getElementById('sectionsModal'), true);
     }
 
     function openForm(item) {
@@ -237,6 +295,38 @@
       render(state.items);
     }
 
+    async function saveSection() {
+      setSecHint('');
+      const type = document.getElementById('secType').value;
+      const currentId = document.getElementById('secId').value;
+      const isNew = (document.getElementById('secId').dataset.new === '1');
+      const id = isNew ? '' : currentId;
+      const name = document.getElementById('secName').value;
+      const description = document.getElementById('secDesc').value;
+      const res = await adminUpsertSection(token, type, { id, name, description });
+
+      await loadAll();
+      document.getElementById('secType').value = type;
+      fillSectionsAdminSelect();
+      document.getElementById('secId').dataset.new = '0';
+      document.getElementById('secId').value = res.id;
+      loadSectionFormFromSelected();
+      setSecHint('تم الحفظ');
+    }
+
+    async function deleteSection() {
+      setSecHint('');
+      const type = document.getElementById('secType').value;
+      const id = document.getElementById('secId').value;
+      if (!id) return;
+      if (!confirm('تأكيد حذف القسم؟ (لازم يكون فارغ)')) return;
+      await adminDeleteSection(token, type, id);
+      await loadAll();
+      fillSectionsAdminSelect();
+      loadSectionFormFromSelected();
+      setSecHint('تم الحذف');
+    }
+
     async function saveItem() {
       const body = {
         id: document.getElementById('id').value.trim() || undefined,
@@ -296,6 +386,7 @@
     });
 
     document.getElementById('addBtn').addEventListener('click', () => openForm(null));
+    document.getElementById('sectionsBtn').addEventListener('click', () => openSectionsModal());
     document.getElementById('save').addEventListener('click', () => saveItem().catch(e => alert(e.message)));
     document.getElementById('cancel').addEventListener('click', () => closeAllModals());
 
@@ -311,6 +402,25 @@
 
     document.getElementById('cancelDiscount').addEventListener('click', () => closeAllModals());
     document.getElementById('applyDiscount').addEventListener('click', () => applyDiscount().catch(e => alert(e.message)));
+
+    document.getElementById('secClose').addEventListener('click', () => closeAllModals());
+    document.getElementById('secType').addEventListener('change', () => {
+      document.getElementById('secId').dataset.new = '0';
+      fillSectionsAdminSelect();
+      loadSectionFormFromSelected();
+    });
+    document.getElementById('secId').addEventListener('change', () => {
+      document.getElementById('secId').dataset.new = '0';
+      loadSectionFormFromSelected();
+    });
+    document.getElementById('secNew').addEventListener('click', () => {
+      document.getElementById('secId').dataset.new = '1';
+      document.getElementById('secName').value = '';
+      document.getElementById('secDesc').value = '';
+      setSecHint('');
+    });
+    document.getElementById('secSave').addEventListener('click', () => saveSection().catch(e => setSecHint('خطأ: ' + e.message)));
+    document.getElementById('secDelete').addEventListener('click', () => deleteSection().catch(e => setSecHint('خطأ: ' + e.message)));
 
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') closeAllModals();

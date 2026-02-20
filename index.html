@@ -8,26 +8,47 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="admin-link" href="./admin/login.html">تسجيل آدمن</a>
+    <a class="admin-link" id="adminLink" href="./admin/login.html">تسجيل آدمن</a>
     <img class="logo" src="./assets/Project 272 [6FBA28E].png" alt="logo" />
+    <div class="lang-slot" id="langSlot"></div>
   </header>
 
   <main class="landing">
     <div class="landing-card">
-      <button class="menu-choice" onclick="location.href='./menu.html?type=cafe'">
-        <div class="choice-title">CAFE MENU</div>
-        <div class="choice-desc">A refined collection of premium coffees, crafted with precision and served with character.</div>
+      <button class="menu-choice" id="cafeBtn">
+        <div class="choice-title" id="cafeTitle">CAFE MENU</div>
+        <div class="choice-desc" id="cafeDesc">A refined collection of premium coffees, crafted with precision and served with character.</div>
       </button>
 
       <div class="divider"></div>
 
-      <button class="menu-choice" onclick="location.href='./menu.html?type=food'">
-        <div class="choice-title">FOOD MENU</div>
-        <div class="choice-desc">A curated selection of flavors, crafted fresh and served with quality you can trust.</div>
+      <button class="menu-choice" id="foodBtn">
+        <div class="choice-title" id="foodTitle">FOOD MENU</div>
+        <div class="choice-desc" id="foodDesc">A curated selection of flavors, crafted fresh and served with quality you can trust.</div>
       </button>
     </div>
   </main>
 
-  <script src="./assets/app-config.js"></script>
+  <script type="module">
+    import { applyLangToDocument, mountLangSwitcher, t } from './assets/i18n.js';
+
+    applyLangToDocument();
+    mountLangSwitcher(document.getElementById('langSlot'));
+
+    document.getElementById('adminLink').textContent = t('admin_login');
+
+    document.getElementById('cafeTitle').textContent = t('cafe_menu_title');
+    document.getElementById('foodTitle').textContent = t('food_menu_title');
+
+    document.getElementById('cafeDesc').textContent = t('cafe_menu');
+    document.getElementById('foodDesc').textContent = t('food_menu');
+
+    document.getElementById('cafeBtn').addEventListener('click', () => {
+      location.href = './menu.html?type=cafe';
+    });
+    document.getElementById('foodBtn').addEventListener('click', () => {
+      location.href = './menu.html?type=food';
+    });
+  </script>
 </body>
 </html>

@@ -8,13 +8,14 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="admin-link" href="./admin/login.html">تسجيل آدمن</a>
+    <a class="admin-link" id="adminLink" href="./admin/login.html">تسجيل آدمن</a>
     <img class="logo" src="./assets/Project 272 [6FBA28E].png" alt="logo" />
+    <div class="lang-slot" id="langSlot"></div>
   </header>
 
   <main class="page">
     <div class="page-title">
-      <button class="icon-btn" onclick="history.back()">رجوع</button>
+      <button class="icon-btn" id="backBtn">رجوع</button>
       <div class="title-line" id="title"></div>
       <div style="width:76px"></div>
     </div>
@@ -23,29 +24,19 @@
   </main>
 
   <script type="module">
-    import { getItemById, rateItem } from './assets/firebase.js';
+    import { getItemById } from './assets/firebase.js';
     import { moneyIQD, calcDiscountedPrice } from './assets/api.js';
+    import { applyLangToDocument, mountLangSwitcher, t } from './assets/i18n.js';
     const params = new URLSearchParams(location.search);
     const id = params.get('id');
 
-    function renderStars(avg, count) {
-      const a = Number(avg || 0);
-      const c = Number(count || 0);
-      const filled = Math.round(a);
-      const stars = Array.from({length:5}, (_,i)=> i<filled ? '★' : '☆').join('');
-      return `<div class="stars">
-        <div class="stars-row"><span class="stars-icons">${stars}</span><span class="stars-meta">${a.toFixed(1)} (${c})</span></div>
-      </div>`;
-    }
-
-    function ratingButtons() {
-      return `<div class="rate-box">
-        <div class="rate-title">قيّم هذا العنصر</div>
-        <div class="rate-buttons">
-          ${[1,2,3,4,5].map(n=>`<button class="rate-btn" data-rate="${n}">${'★'.repeat(n)}</button>`).join('')}
-        </div>
-      </div>`;
-    }
+    applyLangToDocument();
+    mountLangSwitcher(document.getElementById('langSlot'));
+    document.getElementById('adminLink').textContent = t('admin_login');
+    document.getElementById('backBtn').textContent = t('back');
+    document.getElementById('backBtn').addEventListener('click', () => {
+      location.href = './index.html';
+    });
 
     async function load() {
       if (!id) throw new Error('Missing id');
@@ -78,24 +69,9 @@
             <div class="item-name big">${item.name}</div>
             ${priceHtml}
             <div class="item-desc big">${item.description || ''}</div>
-            ${renderStars(item.ratingAvg, item.ratingCount)}
-            ${ratingButtons()}
           </div>
         </div>
       `;
-
-      document.querySelectorAll('.rate-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const value = Number(btn.dataset.rate);
-          try {
-            await rateItem(id, value);
-            const it = await getItemById(id);
-            document.querySelector('.stars').outerHTML = renderStars(it.ratingAvg, it.ratingCount);
-          } catch (e) {
-            alert('فشل التقييم: ' + e.message);
-          }
-        });
-      });
     }
 
     load().catch(err => {

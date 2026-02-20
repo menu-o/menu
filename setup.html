@@ -12,14 +12,21 @@
 </head>
 <body>
   <div class="box">
-    <h1>تهيئة المنيو الأولية</h1>
-    <p>اضغط الزر بالأسفل لإضافة الأصناف الأساسية (القهوة، الشاي، الفطور...) إلى قاعدة بياناتك.</p>
+    <h1 id="title">تهيئة المنيو الأولية</h1>
+    <p id="desc">اضغط الزر بالأسفل لإضافة الأصناف الأساسية (القهوة، الشاي، الفطور...) إلى قاعدة بياناتك.</p>
     <button id="start">ابدأ الإضافة</button>
     <div id="status"></div>
   </div>
 
+  <div style="margin-top:12px; text-align:center" id="langSlot"></div>
+
   <script type="module">
     import { adminUpsertItem, initSections } from './assets/firebase.js';
+    import { applyLangToDocument, mountLangSwitcher, t } from './assets/i18n.js';
+
+    applyLangToDocument();
+    mountLangSwitcher(document.getElementById('langSlot'));
+    document.getElementById('start').textContent = t('save');
     
     // Initialize sections first
     initSections().then(() => console.log('Sections initialized')).catch(console.error);

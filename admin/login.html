@@ -8,24 +8,25 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="admin-link" href="../index.html">الرئيسية</a>
+    <a class="admin-link" id="homeLink" href="../index.html">الرئيسية</a>
     <img class="logo" src="../assets/Project 272 [6FBA28E].png" alt="logo" />
+    <div class="lang-slot" id="langSlot"></div>
   </header>
 
   <main class="page">
     <div class="page-title">
-      <button class="icon-btn" onclick="history.back()">رجوع</button>
-      <div class="title-line">ADMIN</div>
+      <button class="icon-btn" id="backBtn">رجوع</button>
+      <div class="title-line" id="pageTitle">ADMIN</div>
       <div style="width:76px"></div>
     </div>
 
     <div class="panel" id="panel">
-      <div class="panel-title">تسجيل الآدمن</div>
+      <div class="panel-title" id="panelTitle">تسجيل الآدمن</div>
       <div class="form">
-        <label class="label">يوزر</label>
+        <label class="label" id="usernameLabel">يوزر</label>
         <input class="input" id="username" value="admin" />
 
-        <label class="label">باسوورد</label>
+        <label class="label" id="passwordLabel">باسوورد</label>
         <input class="input" id="password" type="password" placeholder="اكتب كلمة السر" />
 
         <button class="btn" id="loginBtn">دخول</button>
@@ -36,7 +37,22 @@
 
   <script type="module">
     import { adminLogin, initSections } from '../assets/firebase.js';
+    import { applyLangToDocument, mountLangSwitcher, t } from '../assets/i18n.js';
     const TOKEN_KEY = 'mu_admin_token';
+
+    applyLangToDocument();
+    mountLangSwitcher(document.getElementById('langSlot'));
+    document.getElementById('homeLink').textContent = t('home');
+    document.getElementById('backBtn').textContent = t('back');
+    document.getElementById('pageTitle').textContent = t('admin');
+    document.getElementById('panelTitle').textContent = t('admin_login');
+    document.getElementById('usernameLabel').textContent = t('username');
+    document.getElementById('passwordLabel').textContent = t('password');
+    document.getElementById('loginBtn').textContent = t('login');
+
+    document.getElementById('backBtn').addEventListener('click', () => {
+      location.href = '../index.html';
+    });
 
     function setHint(msg) {
       document.getElementById('hint').textContent = msg || '';
