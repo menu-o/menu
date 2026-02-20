@@ -345,7 +345,7 @@
               <label>النوع (Type)</label>
               <select class="input" id="formType">
                 <option value="cafe">Cafe</option>
-                <option value="restaurant">Restaurant</option>
+                <option value="food">Food</option>
               </select>
             </div>
             <div class="form-group">
@@ -444,7 +444,7 @@
               <label>النوع (Type)</label>
               <select class="input" id="secType">
                 <option value="cafe">Cafe</option>
-                <option value="restaurant">Restaurant</option>
+                <option value="food">Food</option>
               </select>
             </div>
             <div class="form-group">
@@ -607,7 +607,7 @@
         function openForm(item) {
           closeAllModals();
           show(document.getElementById('modal'), true);
-          document.getElementById('modalTitle').textContent = item ? 'تعديل' : 'إضافة';
+          document.getElementById('modalTitle').textContent = item ? (lang === 'en' ? 'Edit' : 'تعديل') : (lang === 'en' ? 'Add' : 'إضافة');
 
           document.getElementById('id').value = item ? item.id : '';
           document.getElementById('formType').value = item ? item.type : 'cafe';
