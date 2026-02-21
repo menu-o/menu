@@ -694,8 +694,8 @@
         const lang = document.documentElement.lang === 'en' ? 'en' : 'ar';
 
         const filters = {
-          type: 'all',
-          sectionId: 'all',
+          type: 'cafe',
+          sectionId: 'coffee',
           query: ''
         };
 
@@ -724,17 +724,10 @@
           const el = document.getElementById('typeChips');
           el.innerHTML = '';
 
-          showChip(el, (t('all') || (lang === 'en' ? 'All' : 'الكل')), filters.type === 'all', () => {
-            filters.type = 'all';
-            filters.sectionId = 'all';
-            fillTypeChips();
-            fillSectionChips();
-            renderList();
-          });
-
           showChip(el, 'Cafe', filters.type === 'cafe', () => {
             filters.type = 'cafe';
-            filters.sectionId = 'all';
+            const cafeSections = Object.keys(state.sections?.cafe || {});
+            filters.sectionId = cafeSections[0] || '';
             fillTypeChips();
             fillSectionChips();
             renderList();
@@ -742,7 +735,8 @@
 
           showChip(el, 'Food', filters.type === 'food', () => {
             filters.type = 'food';
-            filters.sectionId = 'all';
+            const foodSections = Object.keys(state.sections?.food || {});
+            filters.sectionId = foodSections[0] || '';
             fillTypeChips();
             fillSectionChips();
             renderList();
@@ -753,18 +747,13 @@
           const el = document.getElementById('sectionChips');
           el.innerHTML = '';
 
-          const allLabel = t('all') || (lang === 'en' ? 'All' : 'الكل');
-          showChip(el, allLabel, filters.sectionId === 'all', () => {
-            filters.sectionId = 'all';
-            fillSectionChips();
-            renderList();
-          });
-
-          const type = filters.type === 'all' ? null : filters.type;
+          const type = filters.type;
           const sectionsObj = state.sections || {};
-          const list = type
-            ? Object.values(sectionsObj[type] || {})
-            : [...Object.values(sectionsObj.cafe || {}), ...Object.values(sectionsObj.food || {})];
+          const list = Object.values(sectionsObj[type] || {});
+
+          if (list.length > 0 && !filters.sectionId) {
+            filters.sectionId = list[0].id;
+          }
 
           for (const s of list) {
             const id = s.id;
@@ -953,8 +942,8 @@
           const items = state.items || [];
           const q = (filters.query || '').toLowerCase();
           const filtered = items.filter(it => {
-            if (filters.type !== 'all' && String(it.type || '').toLowerCase() !== filters.type) return false;
-            if (filters.sectionId !== 'all' && String(it.sectionId || '') !== filters.sectionId) return false;
+            if (String(it.type || '').toLowerCase() !== filters.type) return false;
+            if (String(it.sectionId || '') !== filters.sectionId) return false;
             if (!q) return true;
             const hay = `${pickName(it)} ${pickDesc(it)}`.toLowerCase();
             return hay.includes(q);
@@ -1130,11 +1119,6 @@
         document.getElementById('cancel').addEventListener('click', () => closeAllModals());
 
         // search removed
-
-        const script = document.createElement('script');
-        script.type = 'module';
-        script.src = './bulk-add.js';
-        document.body.appendChild(script);
 
         document.getElementById('closeActions').addEventListener('click', () => closeAllModals());
         document.getElementById('edit').addEventListener('click', () => openForm(state.selected));
