@@ -1,4 +1,4 @@
-import { adminUpsertItem, verifyToken } from './assets/firebase.js';
+import { adminUpsertItem } from '../assets/firebase.js';
 
 async function bulkAddFood() {
   const token = localStorage.getItem('mu_admin_token');
