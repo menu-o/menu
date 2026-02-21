@@ -968,7 +968,7 @@
 
           container.innerHTML = filtered.map(it => {
             const s = state.sections && state.sections[it.type] && state.sections[it.type][it.sectionId];
-            const ns = fb.normalizeSection(s);
+            const ns = fb.normalizeSection ? fb.normalizeSection(s) : it.section;
             const itemWithSection = { ...it, section: ns };
             return renderItemCard(itemWithSection);
           }).join('');
