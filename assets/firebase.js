@@ -69,14 +69,32 @@ export async function listSections(type) {
 
 export async function listItemsBySection(type, sectionId) {
   const data = await dbGet(`items/${type}/${sectionId}`);
-  return data
-    ? Object.entries(data).map(([id, v]) => ({ id, ...normalizeItem(v), type, sectionId }))
-    : [];
+  if (!data) return [];
+  
+  const items = [];
+  const entries = Object.entries(data);
+  
+  for (const [id, v] of entries) {
+    // Check if this item is "authorized" by the index to be in this section
+    const idx = await dbGet(`itemIndex/${id}`);
+    if (idx && String(idx.type).toLowerCase() === String(type).toLowerCase() && String(idx.sectionId) === String(sectionId)) {
+      items.push({ id, ...normalizeItem(v), type, sectionId });
+    } else {
+      // This is a "ghost" item. It exists in the section folder but its 
+      // official location in itemIndex is different (or it was deleted).
+      // We should NOT show it to the customer.
+      console.warn(`Cleaning up ghost item ${id} from section ${sectionId}`);
+    }
+  }
+  return items;
 }
 
 export async function getItemById(id) {
   const idx = await dbGet(`itemIndex/${id}`);
-  if (!idx) return null;
+  if (!idx) {
+    // If index is missing, the item might be at a legacy path or partially deleted.
+    return null;
+  }
   const item = await dbGet(`items/${idx.type}/${idx.sectionId}/${id}`);
   return item ? { id, ...normalizeItem(item), type: idx.type, sectionId: idx.sectionId } : null;
 }
