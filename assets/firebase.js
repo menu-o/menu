@@ -244,6 +244,10 @@ export async function adminUpsertItem(token, item) {
   const discountPercent = existing ? Number(existing.discountPercent || 0) : 0;
   const discountUntil = existing ? Number(existing.discountUntil || 0) : 0;
 
+  if (existing && (existing.type !== type || existing.sectionId !== sectionId)) {
+    await dbRemove(`items/${existing.type}/${existing.sectionId}/${id}`);
+  }
+
   await dbSet(`items/${type}/${sectionId}/${id}`, {
     nameAr,
     nameEn,
