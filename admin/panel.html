@@ -653,7 +653,8 @@
         
         const {
           adminListSections, adminListItems, adminUpsertItem, adminDeleteItem, 
-          adminSetDiscount, adminClearDiscount, adminUpsertSection, adminDeleteSection
+          adminSetDiscount, adminClearDiscount, adminUpsertSection, adminDeleteSection,
+          normalizeSection, normalizeItem
         } = fb;
         const { moneyIQD, calcDiscountedPrice } = api;
         const { applyLangToDocument, mountLangSwitcher, t } = i18n;

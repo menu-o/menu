@@ -26,7 +26,7 @@ function uid12() {
   return Math.random().toString(16).slice(2, 8) + Math.random().toString(16).slice(2, 8);
 }
 
-function normalizeSection(s) {
+export function normalizeSection(s) {
   if (!s) return null;
   const nameAr = (typeof s.nameAr === 'string' && s.nameAr.trim()) ? s.nameAr.trim() : (typeof s.name === 'string' ? s.name.trim() : '');
   const nameEn = (typeof s.nameEn === 'string' && s.nameEn.trim()) ? s.nameEn.trim() : '';
@@ -35,7 +35,7 @@ function normalizeSection(s) {
   return { ...s, nameAr, nameEn, descriptionAr, descriptionEn };
 }
 
-function normalizeItem(v) {
+export function normalizeItem(v) {
   if (!v) return null;
   const nameAr = (typeof v.nameAr === 'string' && v.nameAr.trim()) ? v.nameAr.trim() : (typeof v.name === 'string' ? v.name.trim() : '');
   const nameEn = (typeof v.nameEn === 'string' && v.nameEn.trim()) ? v.nameEn.trim() : '';
