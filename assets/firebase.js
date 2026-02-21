@@ -79,8 +79,6 @@ export async function listItemsBySection(type, sectionId) {
     if (idx && String(idx.type).toLowerCase() === String(type).toLowerCase() && String(idx.sectionId) === String(sectionId)) {
       items.push({ id, ...normalizeItem(v), type, sectionId });
     } else {
-      // Cleaning up ghost item from database to prevent future issues
-      console.warn(`Cleaning up ghost item ${id} from section ${sectionId}`);
       await dbRemove(`items/${type}/${sectionId}/${id}`);
     }
   }
@@ -90,7 +88,6 @@ export async function listItemsBySection(type, sectionId) {
 export async function getItemById(id) {
   const idx = await dbGet(`itemIndex/${id}`);
   if (!idx) {
-    // If index is missing, the item might be at a legacy path or partially deleted.
     return null;
   }
   const item = await dbGet(`items/${idx.type}/${idx.sectionId}/${id}`);
@@ -186,7 +183,6 @@ export async function initSections() {
 }
 
 export async function adminLogin(username, password) {
-  // Initialize sections on first login attempt
   await initSections();
   
   username = String(username || '').trim();

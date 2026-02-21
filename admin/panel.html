@@ -800,10 +800,9 @@
 
         function show(el, yes) {
           if (!el) return;
-          console.log('Showing element:', el.id, yes);
           if (yes) {
             el.hidden = false;
-            el.style.display = 'flex'; // Force display flex for modals
+            el.style.display = 'flex';
           } else {
             el.hidden = true;
             el.style.display = 'none';
@@ -941,13 +940,13 @@
 
         async function refreshItems() {
           const container = document.getElementById('items');
-          container.innerHTML = '<div class="empty">جاري التحميل...</div>';
+          container.innerHTML = '<div class="empty">...</div>';
           
           try {
-            state.items = await adminListItems(token, filters.type, filters.sectionId);
+            state.items = await fb.adminListItems(token, filters.type, filters.sectionId);
             renderList();
           } catch (e) {
-            container.innerHTML = `<div class="empty">خطأ في التحميل: ${e.message}</div>`;
+            container.innerHTML = `<div class="empty">${e.message}</div>`;
           }
         }
 
@@ -1142,8 +1141,6 @@
         }
         document.getElementById('save').addEventListener('click', () => saveItem().catch(e => alert(e.message)));
         document.getElementById('cancel').addEventListener('click', () => closeAllModals());
-
-        // search removed
 
         document.getElementById('closeActions').addEventListener('click', () => closeAllModals());
         document.getElementById('edit').addEventListener('click', () => openForm(state.selected));

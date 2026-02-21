@@ -8,7 +8,6 @@ async function bulkAddFood() {
   }
 
   const items = [
-    // BREAKFAST
     { sectionId: 'breakfast', nameAr: 'بيض مخفوق', nameEn: 'Scrambled Eggs', price: 7000, descAr: 'بيض كريمي مخفوق بعناية يقدم مع الخبز المحمص', descEn: 'Creamy scrambled eggs served with toasted bread' },
     { sectionId: 'breakfast', nameAr: 'اومليت جولاي', nameEn: 'July Omelette', price: 8500, descAr: 'أومليت كلاسيكي محضر على طريقة جولاي الخاصة', descEn: 'Classic omelette prepared with July special recipe' },
     { sectionId: 'breakfast', nameAr: 'كرواسون اومليت', nameEn: 'Croissants Omelette', price: 9500, descAr: 'كرواسون فرنسي طازج محشو ببيض الأومليت اللذيذ', descEn: 'Fresh French croissant stuffed with delicious omelette' },
@@ -73,9 +72,7 @@ async function bulkAddFood() {
         descriptionEn: item.descEn,
         imageUrl: ''
       });
-      console.log(`Successfully added: ${item.nameEn}`);
     } catch (e) {
-      console.error(`Failed to add ${item.nameEn}:`, e.message);
     }
   }
 
