@@ -652,7 +652,7 @@
         const i18n = await import('../assets/i18n.js');
         
         const {
-          adminListAll, adminUpsertItem, adminDeleteItem, 
+          adminListSections, adminListItems, adminUpsertItem, adminDeleteItem, 
           adminSetDiscount, adminClearDiscount, adminUpsertSection, adminDeleteSection
         } = fb;
         const { moneyIQD, calcDiscountedPrice } = api;
@@ -724,22 +724,22 @@
           const el = document.getElementById('typeChips');
           el.innerHTML = '';
 
-          showChip(el, 'Cafe', filters.type === 'cafe', () => {
+          showChip(el, 'Cafe', filters.type === 'cafe', async () => {
             filters.type = 'cafe';
             const cafeSections = Object.keys(state.sections?.cafe || {});
             filters.sectionId = cafeSections[0] || '';
             fillTypeChips();
             fillSectionChips();
-            renderList();
+            await refreshItems();
           });
 
-          showChip(el, 'Food', filters.type === 'food', () => {
+          showChip(el, 'Food', filters.type === 'food', async () => {
             filters.type = 'food';
             const foodSections = Object.keys(state.sections?.food || {});
             filters.sectionId = foodSections[0] || '';
             fillTypeChips();
             fillSectionChips();
-            renderList();
+            await refreshItems();
           });
         }
 
@@ -757,10 +757,10 @@
 
           for (const s of list) {
             const id = s.id;
-            showChip(el, pickName(s) || id, filters.sectionId === id, () => {
+            showChip(el, pickName(s) || id, filters.sectionId === id, async () => {
               filters.sectionId = id;
               fillSectionChips();
-              renderList();
+              await refreshItems();
             });
           }
         }
@@ -938,19 +938,39 @@
           `;
         }
 
+        async function refreshItems() {
+          const container = document.getElementById('items');
+          container.innerHTML = '<div class="empty">جاري التحميل...</div>';
+          
+          try {
+            state.items = await adminListItems(token, filters.type, filters.sectionId);
+            renderList();
+          } catch (e) {
+            container.innerHTML = `<div class="empty">خطأ في التحميل: ${e.message}</div>`;
+          }
+        }
+
         function renderList() {
           const items = state.items || [];
           const q = (filters.query || '').toLowerCase();
           const filtered = items.filter(it => {
-            if (String(it.type || '').toLowerCase() !== filters.type) return false;
-            if (String(it.sectionId || '') !== filters.sectionId) return false;
             if (!q) return true;
             const hay = `${pickName(it)} ${pickDesc(it)}`.toLowerCase();
             return hay.includes(q);
           });
 
           const container = document.getElementById('items');
-          container.innerHTML = filtered.map(renderItemCard).join('') || `<div class="empty">${t('empty_items')}</div>`;
+          if (filtered.length === 0) {
+            container.innerHTML = `<div class="empty">${t('empty_items')}</div>`;
+            return;
+          }
+
+          container.innerHTML = filtered.map(it => {
+            const s = state.sections && state.sections[it.type] && state.sections[it.type][it.sectionId];
+            const ns = normalizeSection(s);
+            const itemWithSection = { ...it, section: ns };
+            return renderItemCard(itemWithSection);
+          }).join('');
 
           container.querySelectorAll('.item-card').forEach(el => {
             el.addEventListener('click', () => {
@@ -962,12 +982,10 @@
         }
 
         async function loadAll() {
-          const data = await adminListAll(token);
-          state.sections = data.sections || [];
-          state.items = data.items || [];
+          state.sections = await adminListSections(token);
           fillTypeChips();
           fillSectionChips();
-          renderList();
+          await refreshItems();
           fillSectionsSelect();
           fillSectionsAdminSelect();
         }
@@ -985,13 +1003,16 @@
           
           try {
             const res = await adminUpsertSection(token, type, { id, nameAr, nameEn, descriptionAr, descriptionEn });
-            await loadAll();
+            state.sections = await adminListSections(token);
             document.getElementById('secType').value = type;
             fillSectionsAdminSelect();
             document.getElementById('secId').dataset.new = '0';
             document.getElementById('secId').value = res.id;
             loadSectionFormFromSelected();
             setSecHint('تم الحفظ');
+            fillTypeChips();
+            fillSectionChips();
+            await refreshItems();
           } catch (e) {
             if (e.message.includes('token')) {
               alert('جلسة العمل انتهت، يرجى تسجيل الدخول مرة أخرى');
@@ -1009,10 +1030,13 @@
           if (!id) return;
           if (!confirm('تأكيد حذف القسم؟ (لازم يكون فارغ)')) return;
           await adminDeleteSection(token, type, id);
-          await loadAll();
+          state.sections = await adminListSections(token);
           fillSectionsAdminSelect();
           loadSectionFormFromSelected();
           setSecHint('تم الحذف');
+          fillTypeChips();
+          fillSectionChips();
+          await refreshItems();
         }
 
         async function saveItem() {
@@ -1030,7 +1054,7 @@
           try {
             await adminUpsertItem(token, body);
             closeAllModals();
-            await loadAll();
+            await refreshItems();
           } catch (e) {
             if (e.message.includes('token')) {
               alert('جلسة العمل انتهت، يرجى تسجيل الدخول مرة أخرى');
@@ -1047,7 +1071,7 @@
           try {
             await adminDeleteItem(token, state.selected.id);
             closeAllModals();
-            await loadAll();
+            await refreshItems();
           } catch (e) {
             if (e.message.includes('token')) {
               alert('جلسة العمل انتهت، يرجى تسجيل الدخول مرة أخرى');
@@ -1063,7 +1087,7 @@
           try {
             await adminClearDiscount(token, state.selected.id);
             closeAllModals();
-            await loadAll();
+            await refreshItems();
           } catch (e) {
             if (e.message.includes('token')) {
               alert('جلسة العمل انتهت، يرجى تسجيل الدخول مرة أخرى');
@@ -1084,7 +1108,7 @@
           try {
             await adminSetDiscount(token, state.selected.id, percent, duration);
             closeAllModals();
-            await loadAll();
+            await refreshItems();
           } catch (e) {
             if (e.message.includes('token')) {
               alert('جلسة العمل انتهت، يرجى تسجيل الدخول مرة أخرى');

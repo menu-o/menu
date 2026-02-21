@@ -214,27 +214,16 @@ export async function verifyToken(token) {
   if (nowMs() > Number(admin.tokenUntil || 0)) throw new Error('Token expired');
 }
 
-export async function adminListAll(token) {
+export async function adminListSections(token) {
   await verifyToken(token);
-  const sections = await dbGet('sections');
-  const itemIndex = await dbGet('itemIndex');
-  const items = [];
-  if (itemIndex) {
-    const ids = Object.keys(itemIndex);
-    for (const id of ids) {
-      const it = await getItemById(id);
-      if (it) items.push(it);
-    }
-  }
+  return await dbGet('sections');
+}
 
-  // attach sectionName
-  const out = items.map(it => {
-    const s = sections && sections[it.type] && sections[it.type][it.sectionId];
-    const ns = normalizeSection(s);
-    return { ...normalizeItem(it), section: ns };
-  });
-
-  return { sections, items: out };
+export async function adminListItems(token, type, sectionId) {
+  await verifyToken(token);
+  const data = await dbGet(`items/${type}/${sectionId}`);
+  if (!data) return [];
+  return Object.entries(data).map(([id, v]) => ({ id, ...normalizeItem(v), type, sectionId }));
 }
 
 export async function adminUpsertItem(token, item) {
