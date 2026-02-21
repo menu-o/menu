@@ -70,7 +70,9 @@
       const discountActive = discount > 0 && (!discountUntil || now < discountUntil);
       const discounted = discountActive ? calcDiscountedPrice(price, discount) : null;
 
-      const img = item.imageUrl ? `<img class="item-img" src="${item.imageUrl}" alt="" loading="lazy" />` : `<div class="item-img item-img-empty"></div>`;
+      const img = item.imageUrl
+        ? `<img class="item-img" src="${item.imageUrl}" alt="" loading="lazy" decoding="async" fetchpriority="high" onerror="this.onerror=null;this.remove();" />`
+        : `<div class="item-img item-img-empty"></div>`;
 
       const priceHtml = discountActive ? `
         <div class="price-row">

@@ -105,6 +105,32 @@
       overflow-y: auto;
     }
 
+    #actions .modal-card {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #actions .modal-title {
+      position: sticky;
+      top: 0;
+      background: var(--white-pure);
+      z-index: 2;
+      margin-bottom: 0;
+      padding-bottom: 15px;
+    }
+
+    #actions .form {
+      overflow-y: auto;
+      padding-top: 18px;
+    }
+
+    .actions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
     .modal-title {
       color: var(--gold-muted);
       font-size: 26px;
@@ -398,7 +424,7 @@
       <div class="modal-card">
         <div class="modal-title">خيارات</div>
         <div class="form">
-          <div class="row" style="grid-template-columns:1fr; gap:10px">
+          <div class="actions-list">
             <button class="btn" id="edit">تعديل</button>
             <button class="btn" id="discount">خصم (مدة الخصم)</button>
             <button class="btn" id="clearDiscount">مسح الخصم</button>
