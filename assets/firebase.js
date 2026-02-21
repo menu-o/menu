@@ -75,15 +75,13 @@ export async function listItemsBySection(type, sectionId) {
   const entries = Object.entries(data);
   
   for (const [id, v] of entries) {
-    // Check if this item is "authorized" by the index to be in this section
     const idx = await dbGet(`itemIndex/${id}`);
     if (idx && String(idx.type).toLowerCase() === String(type).toLowerCase() && String(idx.sectionId) === String(sectionId)) {
       items.push({ id, ...normalizeItem(v), type, sectionId });
     } else {
-      // This is a "ghost" item. It exists in the section folder but its 
-      // official location in itemIndex is different (or it was deleted).
-      // We should NOT show it to the customer.
+      // Cleaning up ghost item from database to prevent future issues
       console.warn(`Cleaning up ghost item ${id} from section ${sectionId}`);
+      await dbRemove(`items/${type}/${sectionId}/${id}`);
     }
   }
   return items;
