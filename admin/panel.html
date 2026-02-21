@@ -29,6 +29,31 @@
       align-items: center;
     }
 
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .topbar-btn {
+      border: 1px solid rgba(43, 43, 43, 0.10);
+      background: var(--bg-beige);
+      color: var(--text-coffee);
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+
+    .topbar-btn:hover {
+      box-shadow: 0 10px 22px rgba(0,0,0,.10);
+    }
+
+    .topbar-btn:active {
+      transform: translateY(1px);
+    }
+
     .topbar a, .topbar .lang-btn {
       color: var(--text-coffee) !important;
       text-decoration: none;
@@ -56,6 +81,54 @@
       justify-content: center;
       margin: 20px 0 40px;
       padding: 0 20px;
+    }
+
+    .admin-filters {
+      padding: 0 20px;
+      margin: -10px 0 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .admin-filter-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .admin-filter-label {
+      font-weight: 900;
+      color: rgba(0,0,0,.65);
+      min-width: 90px;
+    }
+
+    .admin-chips {
+      display: flex;
+      gap: 10px;
+      overflow: auto;
+      padding: 6px 2px;
+      flex: 1 1 auto;
+    }
+
+    .admin-chip {
+      flex: 0 0 auto;
+      background: var(--accent-tan);
+      color: #fff;
+      border: 0;
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 10px 18px rgba(0,0,0,.10);
+      transition: transform .12s ease, filter .12s ease;
+    }
+
+    .admin-chip:hover { filter: brightness(1.03); }
+    .admin-chip:active { transform: translateY(1px); }
+
+    .admin-chip-active {
+      outline: 3px solid rgba(188,159,121,.55);
     }
 
     .admin-select {
@@ -337,7 +410,10 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="admin-link" id="homeLink" href="../index.html">الرئيسية</a>
+    <div class="topbar-left">
+      <a class="admin-link" id="homeLink" href="../index.html">الرئيسية</a>
+      <button class="topbar-btn" id="openSearch" type="button">بحث</button>
+    </div>
     <img class="logo" src="../assets/Project 272 [6FBA28E].png" alt="logo" />
     <div class="lang-slot" id="langSlot"></div>
   </header>
@@ -357,7 +433,33 @@
       </select>
     </div>
 
+    <div class="admin-filters">
+      <div class="admin-filter-row">
+        <div class="admin-filter-label" id="typeFilterLabel">النوع</div>
+        <div class="admin-chips" id="typeChips"></div>
+      </div>
+      <div class="admin-filter-row">
+        <div class="admin-filter-label" id="sectionFilterLabel">الأقسام</div>
+        <div class="admin-chips" id="sectionChips"></div>
+      </div>
+    </div>
+
     <div class="items" id="items"></div>
+
+    <div class="modal" id="searchModal" hidden>
+      <div class="modal-card">
+        <div class="modal-title" id="searchTitle">بحث عن طبق</div>
+        <div class="form">
+          <label class="label" id="searchLabel">اكتب اسم الطبق</label>
+          <input class="input" id="searchQuery" placeholder="..." />
+          <div class="row">
+            <button class="btn" id="doSearch" type="button">بحث</button>
+            <button class="icon-btn" id="closeSearch" type="button">إغلاق</button>
+          </div>
+          <div class="hint" id="searchHint" style="margin-top:6px">اكتب جزء من الاسم أو الوصف</div>
+        </div>
+      </div>
+    </div>
 
     <div class="modal" id="modal" hidden>
       <div class="modal-card">
@@ -561,6 +663,12 @@
         document.getElementById('backBtn').textContent = t('back');
         document.getElementById('pageTitle').textContent = t('admin_panel');
         document.getElementById('logout').textContent = t('logout');
+        document.getElementById('openSearch').textContent = t('search') || 'بحث';
+        document.getElementById('typeFilterLabel').textContent = t('type') || 'النوع';
+        document.getElementById('sectionFilterLabel').textContent = t('sections') || 'الأقسام';
+        document.getElementById('searchTitle').textContent = t('search') || 'بحث';
+        document.getElementById('searchLabel').textContent = t('search') || 'بحث';
+        document.getElementById('doSearch').textContent = t('search') || 'بحث';
         const actionSel = document.getElementById('adminAction');
         if (actionSel) {
           actionSel.options[0].textContent = (document.documentElement.lang === 'en') ? '+ Add' : '+ إضافة';
@@ -569,8 +677,119 @@
         }
         const lang = document.documentElement.lang === 'en' ? 'en' : 'ar';
 
+        const filters = {
+          type: 'all',
+          sectionId: 'all',
+          query: ''
+        };
+
+        const pickName = (x) => lang === 'en'
+          ? (x.nameEn || x.nameAr || x.name || '')
+          : (x.nameAr || x.name || x.nameEn || '');
+        const pickDesc = (x) => lang === 'en'
+          ? (x.descriptionEn || x.descriptionAr || x.description || '')
+          : (x.descriptionAr || x.description || x.descriptionEn || '');
+
+        function activeChip(el, active) {
+          el.classList.toggle('admin-chip-active', active);
+        }
+
+        function showChip(container, label, active, onClick) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'admin-chip';
+          btn.textContent = label;
+          activeChip(btn, active);
+          btn.addEventListener('click', onClick);
+          container.appendChild(btn);
+        }
+
+        function fillTypeChips() {
+          const el = document.getElementById('typeChips');
+          el.innerHTML = '';
+
+          showChip(el, (t('all') || (lang === 'en' ? 'All' : 'الكل')), filters.type === 'all', () => {
+            filters.type = 'all';
+            filters.sectionId = 'all';
+            fillTypeChips();
+            fillSectionChips();
+            renderList();
+          });
+
+          showChip(el, 'Cafe', filters.type === 'cafe', () => {
+            filters.type = 'cafe';
+            filters.sectionId = 'all';
+            fillTypeChips();
+            fillSectionChips();
+            renderList();
+          });
+
+          showChip(el, 'Food', filters.type === 'food', () => {
+            filters.type = 'food';
+            filters.sectionId = 'all';
+            fillTypeChips();
+            fillSectionChips();
+            renderList();
+          });
+        }
+
+        function fillSectionChips() {
+          const el = document.getElementById('sectionChips');
+          el.innerHTML = '';
+
+          const allLabel = t('all') || (lang === 'en' ? 'All' : 'الكل');
+          showChip(el, allLabel, filters.sectionId === 'all', () => {
+            filters.sectionId = 'all';
+            fillSectionChips();
+            renderList();
+          });
+
+          const type = filters.type === 'all' ? null : filters.type;
+          const sectionsObj = state.sections || {};
+          const list = type
+            ? Object.values(sectionsObj[type] || {})
+            : [...Object.values(sectionsObj.cafe || {}), ...Object.values(sectionsObj.food || {})];
+
+          for (const s of list) {
+            const id = s.id;
+            showChip(el, pickName(s) || id, filters.sectionId === id, () => {
+              filters.sectionId = id;
+              fillSectionChips();
+              renderList();
+            });
+          }
+        }
+
+        function openSearchModal() {
+          closeAllModals();
+          show(document.getElementById('searchModal'), true);
+          const q = document.getElementById('searchQuery');
+          q.value = filters.query || '';
+          setTimeout(() => q.focus(), 0);
+        }
+
+        function closeSearchModal() {
+          show(document.getElementById('searchModal'), false);
+        }
+
+        function runSearch() {
+          filters.query = (document.getElementById('searchQuery').value || '').trim();
+          renderList();
+          closeSearchModal();
+        }
+
         document.getElementById('backBtn').addEventListener('click', () => {
           location.href = '../index.html';
+        });
+
+        document.getElementById('openSearch').addEventListener('click', () => openSearchModal());
+        document.getElementById('closeSearch').addEventListener('click', () => closeSearchModal());
+        document.getElementById('doSearch').addEventListener('click', () => runSearch());
+        document.getElementById('searchQuery').addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            runSearch();
+          }
         });
 
         function show(el, yes) {
@@ -590,6 +809,7 @@
           show(document.getElementById('actions'), false);
           show(document.getElementById('discountModal'), false);
           show(document.getElementById('sectionsModal'), false);
+          show(document.getElementById('searchModal'), false);
         }
 
         function setSecHint(msg) {
@@ -681,7 +901,9 @@
 
         function renderItemCard(item) {
           const name = lang === 'en' ? (item.nameEn || item.nameAr || item.name || '') : (item.nameAr || item.name || item.nameEn || '');
-          const img = item.imageUrl ? `<img class="item-img" src="${item.imageUrl}" alt="" loading="lazy" />` : `<div class="item-img item-img-empty"></div>`;
+          const img = item.imageUrl
+            ? `<img class="item-img" src="${item.imageUrl}" alt="" loading="lazy" decoding="async" fetchpriority="high" onerror="this.onerror=null;this.remove();" />`
+            : `<div class="item-img item-img-empty"></div>`;
           const price = Number(item.price);
           const discount = Number(item.discountPercent || 0);
           const now = Date.now();
@@ -711,23 +933,38 @@
           `;
         }
 
-        function render(items) {
-          document.getElementById('items').innerHTML = items.map(renderItemCard).join('') || '<div class="empty">لا توجد عناصر</div>';
-          document.querySelectorAll('.admin-item').forEach(el => {
+        function renderList() {
+          const items = state.items || [];
+          const q = (filters.query || '').toLowerCase();
+          const filtered = items.filter(it => {
+            if (filters.type !== 'all' && String(it.type || '').toLowerCase() !== filters.type) return false;
+            if (filters.sectionId !== 'all' && String(it.sectionId || '') !== filters.sectionId) return false;
+            if (!q) return true;
+            const hay = `${pickName(it)} ${pickDesc(it)}`.toLowerCase();
+            return hay.includes(q);
+          });
+
+          const container = document.getElementById('items');
+          container.innerHTML = filtered.map(renderItemCard).join('') || `<div class="empty">${t('empty_items')}</div>`;
+
+          container.querySelectorAll('.item-card').forEach(el => {
             el.addEventListener('click', () => {
               const id = el.dataset.id;
-              const item = state.items.find(x => x.id === id);
+              const item = (state.items || []).find(x => x.id === id);
               if (item) openActions(item);
             });
           });
         }
 
         async function loadAll() {
-          const res = await adminListAll(token);
-          state.sections = res.sections;
-          state.items = res.items || [];
-          render(state.items);
-          fillSectionsSelect(); // Ensure sections dropdown is populated after loading
+          const data = await adminListAll(token);
+          state.sections = data.sections || [];
+          state.items = data.items || [];
+          fillTypeChips();
+          fillSectionChips();
+          renderList();
+          fillSectionsSelect();
+          fillSectionsAdminSelect();
         }
 
         async function saveSection() {
