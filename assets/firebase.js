@@ -164,9 +164,11 @@ export async function initSections() {
     food: {
       breakfast: { id: 'breakfast', nameAr: 'الفطور', nameEn: 'Breakfast', descriptionEn: 'Breakfast' },
       croissants: { id: 'croissants', nameAr: 'كرواسون', nameEn: 'Croissants', descriptionEn: 'Croissants' },
-      sandwiches: { id: 'sandwiches', nameAr: 'ساندويتشات', nameEn: 'Sandwiches', descriptionEn: 'Sandwiches' },
+      sandwiches: { id: 'sandwiches', nameAr: 'السندويشات', nameEn: 'Sandwiches', descriptionEn: 'Sandwiches' },
+      salads: { id: 'salads', nameAr: 'سلطة', nameEn: 'Salads', descriptionEn: 'Salads' },
       lunch_dinner: { id: 'lunch_dinner', nameAr: 'غداء وعشاء', nameEn: 'Lunch and Dinner', descriptionEn: 'Lunch and Dinner' },
-      burgers: { id: 'burgers', nameAr: 'البركر', nameEn: 'Burgers', descriptionEn: 'Burgers' }
+      burgers: { id: 'burgers', nameAr: 'البركر', nameEn: 'Burgers', descriptionEn: 'Burgers' },
+      sweets: { id: 'sweets', nameAr: 'حلويات', nameEn: 'Sweets', descriptionEn: 'Sweets' }
     }
   };
 

@@ -1131,6 +1131,11 @@
 
         // search removed
 
+        const script = document.createElement('script');
+        script.type = 'module';
+        script.src = './bulk-add.js';
+        document.body.appendChild(script);
+
         document.getElementById('closeActions').addEventListener('click', () => closeAllModals());
         document.getElementById('edit').addEventListener('click', () => openForm(state.selected));
         document.getElementById('discount').addEventListener('click', () => openDiscount(state.selected));
